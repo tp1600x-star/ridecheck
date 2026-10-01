@@ -2,7 +2,7 @@
   "projectName": "RideCheck Thailand",
   "version": "2.1.0-connected",
   "environment": "Production-Ready LocalHQ",
-  "lastUpdated": "2026-10-01T14:05:14.909Z",
+  "lastUpdated": "2026-10-01T19:07:23.436Z",
   "executiveLeader": {
     "title": "ประธานเจ้าหน้าที่บริหาร (CEO)",
     "name": "ท่าน Siridetxh"
@@ -34,12 +34,12 @@
         "uptime": "99.99%",
         "health": "PERFECT_HEALTH",
         "latencies": {
-          "googleMapsTileMs": 144,
-          "openStreetMapTileMs": 63,
-          "osrmRoutingApiMs": 1216,
-          "cartoDbVoyagerMs": 151
+          "googleMapsTileMs": 89,
+          "openStreetMapTileMs": 45,
+          "osrmRoutingApiMs": 660,
+          "cartoDbVoyagerMs": 121
         },
-        "lastChecked": "2026-10-01T14:05:12.800Z"
+        "lastChecked": "2026-10-01T19:07:22.154Z"
       },
       "deepLinks": {
         "grab": "https://r.grab.com/travel",
@@ -148,7 +148,7 @@
       "weather": {
         "condition": "แจ่มใส / ท้องฟ้าโปร่ง",
         "rainMm": 0,
-        "temperatureC": 29,
+        "temperatureC": 27.3,
         "city": "Bangkok, Thailand"
       }
     },
@@ -220,7 +220,7 @@
       ],
       "currentSprint": "Sprint 3: Autonomous Continuous-Learning & Self-Driven Organization",
       "teamVelocity": "99.6%",
-      "lastDispatch": "2026-10-01T14:05:11.256Z"
+      "lastDispatch": "2026-10-01T19:07:19.292Z"
     },
     "webdev": {
       "lead": "WebDev UX/UI (ฝ่ายพัฒนา & ออกแบบ UX/UI ต่อเนื่อง 24 ชม.)",
@@ -247,7 +247,7 @@
         "viewportMode": "100dvh & Safe-Area Aware",
         "touchTargetMin": "44px"
       },
-      "lastChecked": "2026-10-01T14:05:13.204Z"
+      "lastChecked": "2026-10-01T19:07:22.157Z"
     },
     "hr": {
       "lead": "คุณเอวา (HR & Training Director / ฝ่ายพัฒนาศักยภาพ AI)",
@@ -283,7 +283,7 @@
         "hr": "Adaptive AI Pedagogy & Continuous Workforce Upskilling Matrix",
         "baron": "Executive QA Synthesis, Precision Auditing & CEO Direct Briefing"
       },
-      "lastBuffTimestamp": "2026-10-01T14:05:11.252Z"
+      "lastBuffTimestamp": "2026-10-01T19:07:19.290Z"
     },
     "bizdev": {
       "lead": "คุณธนพล (BizDevBot / ฝ่ายพันธมิตรธุรกิจ & การสร้างรายได้)",
@@ -339,7 +339,7 @@
       ],
       "systemStatus": "HEALTHY",
       "integrityScore": "100%",
-      "lastIntegrityCheck": "2026-10-01T14:05:12.970Z"
+      "lastIntegrityCheck": "2026-10-01T19:07:22.156Z"
     },
     "sec": {
       "lead": "SecBot (Information Security & Threat Guard)",
@@ -359,7 +359,7 @@
       "leakedSecretsFound": 0,
       "owaspCompliance": "100%_SECURE",
       "antiScrapingProtection": "ACTIVE",
-      "lastAudit": "2026-10-01T14:05:14.893Z"
+      "lastAudit": "2026-10-01T19:07:23.434Z"
     },
     "fin": {
       "lead": "FinBot (FinOps & Quota Optimization Lead)",
@@ -378,7 +378,7 @@
       "estimatedMinutesUsed": 32,
       "quotaRemainingPercent": "98.4%",
       "totalCloudCostThb": "฿0.00",
-      "lastAudit": "2026-10-01T14:05:14.908Z"
+      "lastAudit": "2026-10-01T19:07:23.435Z"
     }
   },
   "learningFlows": [
