@@ -1,0 +1,173 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================================
+    // RideCheck Thailand — Production Hardened Firestore Security Rules
+    // Architecture: Zero-Trust Public Web Client + Real-time Virtual Office
+    // =========================================================================
+
+    // --- Helper Validation Functions ---
+    function isValidString(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function isValidNumber(val, minVal, maxVal) {
+      return val is number && val >= minVal && val <= maxVal;
+    }
+
+    function isAllowedAgentId(id) {
+      return id in [
+        'secretary', 'dev', 'data', 'qa', 'pm', 'mkt', 
+        'uxui', 'hr', 'bizdev', 'legal', 'sec', 'fin', 
+        'siridetxh', 'partner'
+      ];
+    }
+
+    // 1. Platform Statistics (Global Aggregates)
+    match /platform_stats/{statId} {
+      allow read: if true;
+      allow create: if false;
+      allow update: if statId == 'global'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'totalSearches', 'totalSavings', 'totalBookings', 'totalDistanceKm', 'lastUpdated', 'migratedAt'
+        ])
+        && (request.resource.data.totalSearches is number && request.resource.data.totalSearches >= resource.data.totalSearches)
+        && (request.resource.data.totalSavings is number && request.resource.data.totalSavings >= 0);
+      allow delete: if false;
+    }
+
+    // 2. Searches (Anonymous Search Logging)
+    match /searches/{searchId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly([
+          'pickup', 'pickupCoords', 'dropoff', 'dropoffCoords', 
+          'distance', 'duration', 'vehicleType', 'surge', 
+          'cheapestApp', 'cheapestPrice', 'results', 'timestamp', 
+          'sessionId', 'origin', 'destination', 'distanceKm'
+        ])
+        && isValidString(request.resource.data.pickup, 1, 250)
+        && isValidString(request.resource.data.dropoff, 1, 250)
+        && isValidString(request.resource.data.vehicleType, 1, 50)
+        && (request.resource.data.distance is number && request.resource.data.distance >= 0)
+        && (request.resource.data.cheapestPrice is number && request.resource.data.cheapestPrice >= 0);
+      allow update, delete: if false;
+    }
+
+    // 3. Conversions (Ride App Booking Click Tracking)
+    match /conversions/{conversionId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly([
+          'appChosen', 'appName', 'priceChosen', 'fare', 
+          'baselinePrice', 'savings', 'vehicleType', 
+          'pickup', 'dropoff', 'timestamp', 'sessionId'
+        ])
+        && (
+          (request.resource.data.appChosen is string && request.resource.data.appChosen.size() <= 50) ||
+          (request.resource.data.appName is string && request.resource.data.appName.size() <= 50)
+        )
+        && (
+          (request.resource.data.priceChosen is number && request.resource.data.priceChosen >= 0) ||
+          (request.resource.data.fare is number && request.resource.data.fare >= 0)
+        );
+      allow update, delete: if false;
+    }
+
+    // 4. Agents (3D Office Virtual Staff Status & Seeding)
+    match /agents/{agentId} {
+      allow read: if true;
+      allow create, update: if isAllowedAgentId(agentId)
+        && request.resource.data.keys().hasOnly([
+          'id', 'name', 'role', 'statusState', 'statusNotice', 
+          'pos', 'color', 'bodyColor', 'deskColor', 'greeting', 
+          'quick', 'skills', 'level', 'department', 'lastActive', 
+          'migratedAt', 'currentTask', 'completedTasksCount', 'icon'
+        ])
+        && isValidString(request.resource.data.name, 1, 100)
+        && isValidString(request.resource.data.statusState, 1, 50);
+      allow delete: if false;
+    }
+
+    // 5. Executive Inbox (Orders & Tasks)
+    match /executive_inbox/{msgId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.keys().hasOnly([
+          'from', 'subject', 'body', 'date', 'read', 'priority', 
+          'status', 'attachments', 'timestamp', 'createdAt', 'sender'
+        ])
+        && isValidString(request.resource.data.body, 1, 2000);
+      allow delete: if false;
+    }
+
+    // 6. Virtual Meetings
+    match /meetings/{meetingId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.keys().hasOnly([
+          'topic', 'date', 'status', 'attendees', 'agenda', 'minutes', 'timestamp', 'createdAt'
+        ])
+        && isValidString(request.resource.data.topic, 1, 300);
+      allow delete: if false;
+    }
+
+    // 7. Delivered Works (Proof of Work)
+    match /delivered_works/{workId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.keys().hasOnly([
+          'agentId', 'agentName', 'task', 'description', 'status', 
+          'rating', 'timestamp', 'createdAt', 'notes'
+        ])
+        && isValidString(request.resource.data.task, 1, 300);
+      allow delete: if false;
+    }
+
+    // 8. Live Events (Real-time Audit Ticker)
+    match /live_events/{eventId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly([
+          'action', 'author', 'data', 'timestamp', 'createdAt'
+        ])
+        && isValidString(request.resource.data.action, 1, 200);
+      allow update, delete: if false;
+    }
+
+    // 9. Agent Messages (Direct Dialogues)
+    match /agent_messages/{msgId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.keys().hasOnly([
+          'agentId', 'text', 'from', 'timestamp', 'createdAt', 'direction'
+        ])
+        && isValidString(request.resource.data.text, 1, 1000);
+      allow delete: if false;
+    }
+
+    // 10. Completed Tasks & Agent Logs
+    match /completed_tasks/{taskId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly([
+          'department', 'agentId', 'agentName', 'task', 'note', 'timestamp', 'source'
+        ])
+        && isValidString(request.resource.data.task, 1, 300);
+      allow update, delete: if false;
+    }
+
+    match /agent_logs/{logId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly([
+          'department', 'agentId', 'message', 'level', 'timestamp'
+        ])
+        && isValidString(request.resource.data.message, 1, 500);
+      allow update, delete: if false;
+    }
+
+    // 11. Platform Settings (Read-Only for Client, Admin-Only for Server)
+    match /platform_settings/{settingId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Default deny all other paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

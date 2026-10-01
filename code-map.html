@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RideCheck Thailand — Interactive Architecture Code Map</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-primary: #080c16;
+      --bg-secondary: #0f172a;
+      --bg-card: rgba(15, 23, 42, 0.92);
+      --border-color: rgba(255, 255, 255, 0.12);
+      --border-active: #38bdf8;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-blue: #38bdf8;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-purple: #a855f7;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', 'Sarabun', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+
+    /* Top Navigation */
+    header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 68px;
+      background: rgba(8, 12, 22, 0.92);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 1.25rem;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.45);
+    }
+    .brand-title {
+      font-weight: 800;
+      font-size: 1.2rem;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #ffffff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .brand-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #38bdf8;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Controls Bar */
+    .controls-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .search-box {
+      position: relative;
+      width: 220px;
+    }
+    .search-box input {
+      width: 100%;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 12px 8px 34px;
+      color: var(--text-main);
+      font-size: 0.85rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-box input:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
+    }
+    .search-box i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .filter-btn {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      color: #fff;
+      background: rgba(56, 189, 248, 0.18);
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+    }
+
+    .flow-select {
+      background: #0b1329;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: #38bdf8;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      outline: none;
+      cursor: pointer;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.15);
+    }
+
+    /* Share Button */
+    .share-btn {
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      border: none;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+      transition: all 0.25s;
+    }
+    .share-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+    }
+
+    /* Canvas Area */
+    #canvas-container {
+      position: absolute;
+      top: 68px;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      overflow: hidden;
+      cursor: grab;
+      background: radial-gradient(circle at 50% 45%, #131d3d 0%, #080c16 85%);
+    }
+    #canvas-container:active { cursor: grabbing; }
+
+    /* Canvas Grid Background */
+    .grid-pattern {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    /* Floating Viewport Controls */
+    .viewport-controls {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 90;
+    }
+    .vp-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+      transition: all 0.2s;
+    }
+    .vp-btn:hover {
+      background: var(--accent-blue);
+      color: #000;
+      box-shadow: 0 0 16px var(--accent-blue);
+    }
+
+    /* Help Tip */
+    .help-tip {
+      position: absolute;
+      bottom: 24px;
+      left: 80px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--border-color);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      backdrop-filter: blur(8px);
+      pointer-events: none;
+      z-index: 85;
+    }
+
+    /* Legend */
+    .legend-panel {
+      position: absolute;
+      bottom: 24px;
+      right: 430px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      backdrop-filter: blur(12px);
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 90;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; color: var(--text-muted); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
+
+    /* Detail Drawer Panel (High Contrast Spotlight) */
+    #detail-panel {
+      position: absolute;
+      top: 68px;
+      bottom: 0;
+      right: 0;
+      width: 410px;
+      background: rgba(11, 18, 36, 0.98);
+      border-left: 2px solid rgba(56, 189, 248, 0.4);
+      backdrop-filter: blur(20px);
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 95;
+      display: flex;
+      flex-direction: column;
+      box-shadow: -15px 0 45px rgba(0, 0, 0, 0.75);
+    }
+    #detail-panel.open { transform: translateX(0); }
+
+    .dp-header {
+      padding: 22px;
+      border-bottom: 1px solid var(--border-color);
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.08) 0%, transparent 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .dp-badge {
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.75px;
+      margin-bottom: 8px;
+      display: inline-block;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .dp-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .dp-close {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .dp-close:hover {
+      background: #ef4444;
+      color: #fff;
+      border-color: #ef4444;
+    }
+
+    .dp-body {
+      padding: 22px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .dp-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .dp-section-title {
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #38bdf8;
+      letter-spacing: 0.75px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dp-text {
+      font-size: 0.92rem;
+      color: #e2e8f0;
+      line-height: 1.65;
+    }
+    .dp-chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .dp-chip {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: #7dd3fc;
+      font-weight: 600;
+    }
+    .dp-conn-chip {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: #34d399;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .dp-conn-chip:hover {
+      background: rgba(16, 185, 129, 0.35);
+      transform: translateY(-2px);
+    }
+    .dp-code-box {
+      background: #050811;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: #38bdf8;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* SVG Graphical Elements */
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Links: High Contrast Glowing Curves */
+    .link-group {
+      transition: all 0.3s;
+    }
+    .link-glow-bg {
+      stroke: rgba(56, 189, 248, 0.15);
+      stroke-width: 8;
+      fill: none;
+      stroke-linecap: round;
+      transition: all 0.3s;
+    }
+    .link-line {
+      stroke: #64748b;
+      stroke-width: 3.5;
+      fill: none;
+      stroke-linecap: round;
+      transition: all 0.3s;
+    }
+    .link-label-rect {
+      fill: #0b1329;
+      stroke: #38bdf8;
+      stroke-width: 1.2;
+      rx: 6;
+      ry: 6;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+    }
+    .link-label-text {
+      fill: #e2e8f0;
+      font-size: 10.5px;
+      font-weight: 700;
+      font-family: 'Sarabun', sans-serif;
+      text-anchor: middle;
+      dominant-baseline: central;
+      pointer-events: none;
+    }
+
+    /* Flow Active Lines */
+    .link-group.active-flow .link-glow-bg {
+      stroke: rgba(56, 189, 248, 0.55);
+      stroke-width: 12;
+      filter: drop-shadow(0 0 10px #38bdf8);
+    }
+    .link-group.active-flow .link-line {
+      stroke: #38bdf8;
+      stroke-width: 4.5;
+      stroke-dasharray: 8 6;
+      animation: flowAnimation 1s linear infinite;
+    }
+    @keyframes flowAnimation {
+      from { stroke-dashoffset: 28; }
+      to { stroke-dashoffset: 0; }
+    }
+
+    /* Nodes: Interactive Cards */
+    .node-group {
+      cursor: pointer;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+    }
+    .node-card {
+      rx: 14;
+      ry: 14;
+      fill: #0d152a;
+      stroke: rgba(255, 255, 255, 0.14);
+      stroke-width: 2;
+      filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.6));
+      transition: all 0.25s;
+    }
+    .node-group:hover .node-card {
+      stroke: #38bdf8;
+      fill: #14203d;
+      stroke-width: 3;
+      transform: translateY(-2px);
+    }
+
+    /* SELECTED SPOTLIGHT EFFECT */
+    .node-card.selected {
+      stroke: #38bdf8 !important;
+      stroke-width: 4 !important;
+      fill: #152549 !important;
+      filter: drop-shadow(0 0 35px rgba(56, 189, 248, 0.85)) !important;
+    }
+    .node-card.connected-target {
+      stroke: #10b981 !important;
+      stroke-width: 3.5 !important;
+      fill: #0c2b29 !important;
+      filter: drop-shadow(0 0 25px rgba(16, 185, 129, 0.75)) !important;
+    }
+    .node-card.connected-source {
+      stroke: #a855f7 !important;
+      stroke-width: 3.5 !important;
+      fill: #221238 !important;
+      filter: drop-shadow(0 0 25px rgba(168, 85, 247, 0.75)) !important;
+    }
+
+    /* DIMMING NON-RELEVANT NODES */
+    .node-group.dimmed {
+      opacity: 0.15;
+      pointer-events: none;
+    }
+    .link-group.dimmed {
+      opacity: 0.08;
+    }
+
+    /* SHARE MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-content {
+      width: 90%;
+      max-width: 580px;
+      background: #0f172a;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 30px rgba(56, 189, 248, 0.2);
+      overflow: hidden;
+      animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes modalPop {
+      from { transform: scale(0.92) translateY(20px); opacity: 0; }
+      to { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .modal-header {
+      padding: 20px 24px;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(56, 189, 248, 0.15));
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+    .modal-close:hover { color: #fff; }
+    .modal-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .share-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .sc-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .sc-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sc-btn {
+      background: #1e293b;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .sc-btn:hover {
+      background: #38bdf8;
+      color: #000;
+    }
+    .sc-link-input {
+      width: 100%;
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #38bdf8;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo"><i class="fas fa-network-wired"></i></div>
+      <div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="brand-title">RideCheck Thailand</span>
+          <span class="brand-badge">Architecture Code Map</span>
+        </div>
+        <div style="font-size:0.7rem; color:var(--text-muted);">ระบบผังเชื่อมโยงสถาปัตยกรรมและตรรกะการทำงานทั้งระบบ</div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-bar">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="search-input" placeholder="ค้นหาไฟล์ หรือหน้าที่...">
+      </div>
+
+      <button class="filter-btn active" data-layer="all"><i class="fas fa-layer-group"></i> ทั้งหมด</button>
+      <button class="filter-btn" data-layer="frontend"><i class="fas fa-desktop"></i> Frontend</button>
+      <button class="filter-btn" data-layer="ai"><i class="fas fa-robot"></i> AI Engine</button>
+      <button class="filter-btn" data-layer="bot"><i class="fas fa-paper-plane"></i> Telegram Bot</button>
+      <button class="filter-btn" data-layer="devops"><i class="fas fa-vial"></i> QA & CI/CD</button>
+
+      <select class="flow-select" id="flow-select">
+        <option value="none">⚡ เลือกลำดับ Flow การทำงาน...</option>
+        <option value="flow-fix">🎯 Flow 1: สั่ง /fix ผ่าน Telegram สู่ Live Deploy</option>
+        <option value="flow-user">🚗 Flow 2: ผู้ใช้เทียบราคา 5 ค่าย -> สะสมยอดประหยัดจริง</option>
+        <option value="flow-mirror">🕵️ Flow 3: ระบบ Secret Mirroring แอบส่องพาร์ทเนอร์</option>
+      </select>
+
+      <button class="share-btn" id="btn-open-share"><i class="fas fa-share-nodes"></i> แชร์ให้เพื่อน</button>
+    </div>
+  </header>
+
+  <!-- Interactive Canvas Container -->
+  <div id="canvas-container">
+    <div class="grid-pattern"></div>
+    <svg id="map-svg">
+      <defs>
+        <!-- Arrowhead Markers -->
+        <marker id="arrow-default" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#64748b" />
+        </marker>
+        <marker id="arrow-active" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#38bdf8" />
+        </marker>
+        <marker id="arrow-source" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#a855f7" />
+        </marker>
+        <marker id="arrow-target" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#10b981" />
+        </marker>
+      </defs>
+      <g id="canvas-world"></g>
+    </svg>
+  </div>
+
+  <!-- Viewport Zoom Controls -->
+  <div class="viewport-controls">
+    <button class="vp-btn" id="btn-zoom-in" title="ซูมเข้า"><i class="fas fa-plus"></i></button>
+    <button class="vp-btn" id="btn-zoom-out" title="ซูมออก"><i class="fas fa-minus"></i></button>
+    <button class="vp-btn" id="btn-reset" title="รีเซ็ตมุมมอง"><i class="fas fa-compress-arrows-alt"></i></button>
+  </div>
+
+  <!-- Instruction Tooltip -->
+  <div class="help-tip"><i class="fas fa-mouse-pointer" style="color:#38bdf8;"></i> คลิกที่โหนดเพื่อดูหน้าที่แบบ Spotlight หรือลากเพื่อเลื่อนดูแผนผัง</div>
+
+  <!-- Legend -->
+  <div class="legend-panel">
+    <div class="legend-item"><span class="legend-dot" style="background:#10b981; color:#10b981;"></span> Frontend / Client</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#a855f7; color:#a855f7;"></span> Autonomous AI</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#06b6d4; color:#06b6d4;"></span> Telegram Bot</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#f59e0b; color:#f59e0b;"></span> QA & DevOps</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#f43f5e; color:#f43f5e;"></span> Data & Config</div>
+  </div>
+
+  <!-- Spotlight Detail Panel -->
+  <div id="detail-panel">
+    <div class="dp-header">
+      <div>
+        <span class="dp-badge" id="dp-badge">FRONTEND</span>
+        <div class="dp-title" id="dp-title">v2.html</div>
+      </div>
+      <button class="dp-close" id="dp-close"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="dp-body">
+      <div class="dp-card" style="border-left: 3px solid #38bdf8;">
+        <div class="dp-section-title"><i class="fas fa-bullseye"></i> บทบาทและหน้าที่หลักในระบบ</div>
+        <div class="dp-text" id="dp-desc">-</div>
+      </div>
+
+      <div class="dp-card">
+        <div class="dp-section-title"><i class="fas fa-cogs"></i> การทำงานสำคัญ (Core Features)</div>
+        <div class="dp-chip-list" id="dp-chips"></div>
+      </div>
+
+      <div class="dp-card">
+        <div class="dp-section-title"><i class="fas fa-arrow-right-arrow-left"></i> ไฟล์และระบบที่เชื่อมโยงถึงกัน</div>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">คลิกชื่อไฟล์เพื่อกระโดดไปดูโหนดนั้น:</div>
+        <div class="dp-chip-list" id="dp-deps"></div>
+      </div>
+
+      <div class="dp-card">
+        <div class="dp-section-title"><i class="fas fa-folder-open"></i> ตำแหน่งไฟล์จริงในโฟลเดอร์เครื่อง</div>
+        <div class="dp-code-box" id="dp-path">-</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share Modal -->
+  <div class="modal-overlay" id="share-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fas fa-share-nodes" style="color:#10b981;"></i> แชร์แผนผังสถาปัตยกรรม RideCheck</div>
+        <button class="modal-close" id="btn-close-share"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Option 1: Live Cloud Link -->
+        <div class="share-card">
+          <div class="sc-header">
+            <span class="sc-title"><i class="fas fa-globe"></i> ลิงก์ออนไลน์เปิดดูสด (Live Cloud Web)</span>
+            <button class="sc-btn" id="btn-copy-url"><i class="fas fa-copy"></i> คัดลอกลิงก์</button>
+          </div>
+          <div style="font-size:0.8rem; color:var(--text-muted);">เพื่อนและพาร์ทเนอร์สามารถเปิดดูผังแบบ Interactive ได้จากเบราว์เซอร์หรือมือถือได้ทันที:</div>
+          <input type="text" class="sc-link-input" id="live-url-input" readonly value="https://ridecheck-thailand.web.app/code-map.html">
+        </div>
+
+        <!-- Option 2: Copy Summary Text -->
+        <div class="share-card">
+          <div class="sc-header">
+            <span class="sc-title"><i class="fas fa-comment-dots"></i> คัดลอกสรุปสถาปัตยกรรมส่งในแชท</span>
+            <button class="sc-btn" id="btn-copy-summary"><i class="fas fa-copy"></i> ก๊อปปี้ข้อความสรุป</button>
+          </div>
+          <div style="font-size:0.8rem; color:var(--text-muted);">ข้อความทางการ สรุปการทำงาน 5 ชั้นของระบบ RideCheck สำหรับส่งใน LINE / Telegram:</div>
+          <textarea class="sc-link-input" id="summary-text-box" rows="4" readonly style="resize:none;">🚗 สถาปัตยกรรมระบบ RideCheck Thailand (Autonomous Full-Stack Architecture)
+1. Frontend Experience: v2.html & index.html (เปรียบเทียบราคา Grab, Bolt, LINE MAN, Maxim, inDrive พร้อมยอดเงินช่วยคนไทยประหยัดแล้วเริ่มต้น 0 บาทจากผู้ใช้จริง)
+2. Telegram Bot Orchestration: telegram-baron.js (Multi-Admin สำหรับ CEO & พาร์ทเนอร์ พร้อมคำสั่งบริหาร /deploy, /fix และระบบ Secret Mirroring แอบส่อง)
+3. 100% Autonomous AI Engineer: ai-coder-agent.js (เชื่อม Gemini 3.5 API แก้ไขโค้ดและ Git Push อัตโนมัติ พร้อม Safe Rollback)
+4. QA Pre-Deploy Test Gate: test-runner.js (ชุดทดสอบอัตโนมัติ 23 ข้อ Zero-Bug Guarantee)
+5. CI/CD & Cloud Hosting: GitHub Actions และ Firebase Hosting (https://ridecheck-thailand.web.app)</textarea>
+        </div>
+
+        <!-- Option 3: Single File HTML -->
+        <div class="share-card">
+          <div class="sc-header">
+            <span class="sc-title"><i class="fas fa-file-code"></i> ไฟล์เดี่ยว Standalone HTML</span>
+            <button class="sc-btn" id="btn-download-html"><i class="fas fa-download"></i> ดาวน์โหลดไฟล์</button>
+          </div>
+          <div style="font-size:0.8rem; color:var(--text-muted);">ไฟล์ <code>code-map.html</code> เป็นไฟล์เดี่ยวแบบสมบูรณ์ สามารถแนบส่งในอีเมลหรือส่งผ่าน Discord/LINE ให้เพื่อนดับเบิลคลิกเปิดบนคอมพิวเตอร์ได้ทันที</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== SYSTEM DATA: NODES =====
+    const nodes = [
+      // 1. Frontend
+      {
+        id: 'v2.html',
+        title: 'v2.html',
+        category: 'frontend',
+        color: '#10b981',
+        x: 80, y: 100, width: 230, height: 110,
+        badge: 'Production Web App',
+        desc: 'หน้าเว็บแอปเวอร์ชันใหม่สำหรับผู้ใช้จริง รองรับการเปรียบเทียบค่าโดยสาร 5 ค่าย (Grab, Bolt, LINE MAN, Maxim, inDrive), แสดงแผนที่ Leaflet และระบบนับยอดเงินสะสมที่ช่วยคนไทยประหยัดแล้วเริ่มต้นที่ 0 บาทจากผู้ใช้จริง',
+        chips: ['Nationwide Savings Engine', 'Leaflet Map Integration', 'Deep Link 5 ค่าย', 'Surge Pricing Matrix'],
+        deps: ['project-resources.json', 'styles.css', 'app.js', 'firebase.json'],
+        path: 'C:\\Ridecheck\\v2.html'
+      },
+      {
+        id: 'index.html',
+        title: 'index.html',
+        category: 'frontend',
+        color: '#10b981',
+        x: 80, y: 260, width: 230, height: 110,
+        badge: 'Main Gateway Portal',
+        desc: 'ประตูหน้าหลักของ RideCheck แสดงสถิติและเครื่องคำนวณราคา พร้อมระบบ PWA Ready และ SEO Meta Tag สมบูรณ์แบบ',
+        chips: ['Fare Calculator', 'Direct Booking Links', 'Hero Stat Counter', 'Responsive Mobile Grid'],
+        deps: ['v2.html', 'project-resources.json', 'styles.css'],
+        path: 'C:\\Ridecheck\\index.html'
+      },
+      {
+        id: 'styles.css',
+        title: 'styles.css',
+        category: 'frontend',
+        color: '#10b981',
+        x: 80, y: 420, width: 230, height: 95,
+        badge: 'UI Stylesheet',
+        desc: 'ดีไซน์ธีม Neon Dark และ Glassmorphism ควบคุมความลื่นไหลของ Responsive Layout ในอุปกรณ์ทุกขนาด',
+        chips: ['Neon Dark Theme', 'Glassmorphism Effects', 'Mobile Touch Optimization'],
+        deps: ['index.html', 'v2.html'],
+        path: 'C:\\Ridecheck\\styles.css'
+      },
+
+      // 2. Bot & Command Layer
+      {
+        id: 'telegram-baron.js',
+        title: 'telegram-baron.js',
+        category: 'bot',
+        color: '#06b6d4',
+        x: 430, y: 180, width: 260, height: 130,
+        badge: 'Telegram Orchestrator',
+        desc: 'ศูนย์บัญชาการหลักผ่านบอท @RideCheckBaronBot ควบคุมด้วยสิทธิ์ Multi-Admin (CEO & Authorized Admins) พร้อมระบบ Secret Mirroring แอบส่องแบบไร้ร่องรอย และคำสั่ง /deploy, /fix, /code',
+        chips: ['Secret Mirroring แอบส่อง', 'Long-Polling Multi-Admin', 'Command Dispatcher (/fix, /deploy)'],
+        deps: ['ai-coder-agent.js', 'test-runner.js', 'git-sync-watcher.js', '.env'],
+        path: 'C:\\Ridecheck\\telegram-baron.js'
+      },
+
+      // 3. Autonomous AI Engine
+      {
+        id: 'ai-coder-agent.js',
+        title: 'ai-coder-agent.js',
+        category: 'ai',
+        color: '#a855f7',
+        x: 800, y: 130, width: 270, height: 140,
+        badge: 'Autonomous AI Engineer',
+        desc: 'วิศวกรซอฟต์แวร์ AI อัตโนมัติ 100% รับโจทย์ผ่านคำสั่ง -> เชื่อม Gemini 3.5 API -> เลือกไฟล์และวิเคราะห์ Diff Patch -> ตรวจสอบด้วย test-runner.js -> Git Commit & Push อัตโนมัติ พร้อมระบบ Safe Rollback',
+        chips: ['Gemini 3.5 Flash Model', 'CRLF Line-Ending Normalization', 'Self-Healing Auto-Rollback', 'Autonomous Git Commit'],
+        deps: ['test-runner.js', 'v2.html', 'index.html', '.env'],
+        path: 'C:\\Ridecheck\\ai-coder-agent.js'
+      },
+
+      // 4. Quality Gate
+      {
+        id: 'test-runner.js',
+        title: 'test-runner.js',
+        category: 'devops',
+        color: '#f59e0b',
+        x: 800, y: 340, width: 270, height: 125,
+        badge: 'Automated QA Gate',
+        desc: 'ด่านตรวจคุณภาพอัตโนมัติ 23 ข้อ เช็คโครงสร้าง JSON, สูตรคำนวณราคา 5 ค่าย, Deep Link Schemes และ Zero-Leak Security Audit ก่อนทุก Deploy',
+        chips: ['23 Automated Tests', 'Zero-Bug Policy', 'API Key Leak Protection', 'Pre-Deploy Verification'],
+        deps: ['project-resources.json', 'v2.html', 'index.html', '.gitignore'],
+        path: 'C:\\Ridecheck\\test-runner.js'
+      },
+
+      // 5. Cloud & CI/CD
+      {
+        id: 'git-sync-watcher.js',
+        title: 'git-sync-watcher.js',
+        category: 'devops',
+        color: '#f59e0b',
+        x: 1180, y: 190, width: 250, height: 110,
+        badge: 'Git Sync & CI/CD',
+        desc: 'ระบบเฝ้าดูและซิงก์โปรเจกต์อัตโนมัติ ทำ git add, commit, rebase และ push เข้าสู่ GitHub (tp1600x-star/ridecheck) แบบ Real-time',
+        chips: ['Auto Git Sync', 'Debounce Watcher', 'Push to GitHub main'],
+        deps: ['GitHub Repo', 'test-runner.js'],
+        path: 'C:\\Ridecheck\\git-sync-watcher.js'
+      },
+      {
+        id: 'firebase-hosting',
+        title: 'Firebase & GitHub',
+        category: 'devops',
+        color: '#f59e0b',
+        x: 1180, y: 370, width: 250, height: 110,
+        badge: 'Production Cloud',
+        desc: 'GitHub Actions workflow (.github/workflows/bot-runner.yml) และ Firebase Hosting บริการเว็บสดแก่ผู้ใช้งานทั่วประเทศ',
+        chips: ['GitHub Actions Runner', 'Firebase Live Channel', 'SSL Fast CDN'],
+        deps: ['firebase.json', 'v2.html', 'index.html'],
+        path: 'https://ridecheck-thailand.web.app'
+      },
+
+      // 6. Data Store & Config
+      {
+        id: 'project-resources.json',
+        title: 'project-resources.json',
+        category: 'data',
+        color: '#f43f5e',
+        x: 430, y: 390, width: 260, height: 115,
+        badge: 'Config Database',
+        desc: 'ฐานข้อมูลกลางเก็บข้อมูลแผนกพนักงาน, ค่าโดยสารเริ่มต้น (baseFare), อัตราต่อกิโลเมตร (perKmRates) และ URL Deep Link ของ 5 แอปเรียกรถ',
+        chips: ['5 App Price Matrix', 'Deep Link Scheme Schema', 'Department Hierarchy'],
+        deps: ['v2.html', 'index.html', 'test-runner.js'],
+        path: 'C:\\Ridecheck\\project-resources.json'
+      }
+    ];
+
+    // ===== CONNECTIONS WITH DESCRIPTIVE ACTION LABELS =====
+    const links = [
+      {
+        from: 'telegram-baron.js',
+        to: 'ai-coder-agent.js',
+        label: 'สั่งแก้โค้ด /fix',
+        flow: 'flow-fix'
+      },
+      {
+        from: 'ai-coder-agent.js',
+        to: 'v2.html',
+        label: 'แก้ไฟล์ & บันทึก',
+        flow: 'flow-fix'
+      },
+      {
+        from: 'ai-coder-agent.js',
+        to: 'test-runner.js',
+        label: 'รันเทส 23 ข้อ',
+        flow: 'flow-fix'
+      },
+      {
+        from: 'ai-coder-agent.js',
+        to: 'git-sync-watcher.js',
+        label: 'Git Commit & Push',
+        flow: 'flow-fix'
+      },
+      {
+        from: 'git-sync-watcher.js',
+        to: 'firebase-hosting',
+        label: 'Deploy Live Web',
+        flow: 'flow-fix'
+      },
+
+      {
+        from: 'v2.html',
+        to: 'project-resources.json',
+        label: 'ดึงฐานราคา 5 ค่าย',
+        flow: 'flow-user'
+      },
+      {
+        from: 'index.html',
+        to: 'project-resources.json',
+        label: 'อ่านสเปกราคา',
+        flow: 'flow-user'
+      },
+      {
+        from: 'v2.html',
+        to: 'styles.css',
+        label: 'โหลด UI Theme',
+        flow: ''
+      },
+      {
+        from: 'test-runner.js',
+        to: 'project-resources.json',
+        label: 'ตรวจ Schema',
+        flow: ''
+      },
+      {
+        from: 'telegram-baron.js',
+        to: 'test-runner.js',
+        label: 'Pre-Deploy QA',
+        flow: ''
+      }
+    ];
+
+    // ===== RENDER SVG GRAPH =====
+    const world = document.getElementById('canvas-world');
+
+    // 1. Draw Links (Glow BG + Line + Action Pill)
+    links.forEach((l, idx) => {
+      const src = nodes.find(n => n.id === l.from);
+      const dst = nodes.find(n => n.id === l.to);
+      if (!src || !dst) return;
+
+      const x1 = src.x + src.width;
+      const y1 = src.y + src.height / 2;
+      const x2 = dst.x;
+      const y2 = dst.y + dst.height / 2;
+
+      const dx = x2 - x1;
+      const cx1 = x1 + dx * 0.45;
+      const cy1 = y1;
+      const cx2 = x1 + dx * 0.55;
+      const cy2 = y2;
+      const midX = (x1 + x2) / 2;
+      const midY = (y1 + y2) / 2;
+
+      const pathData = 'M ' + x1 + ' ' + y1 + ' C ' + cx1 + ' ' + cy1 + ', ' + cx2 + ' ' + cy2 + ', ' + x2 + ' ' + y2;
+
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'link-group');
+      g.setAttribute('id', 'link-grp-' + idx);
+      g.setAttribute('data-from', l.from);
+      g.setAttribute('data-to', l.to);
+      g.setAttribute('data-flow', l.flow);
+
+      // Glow backdrop
+      const glow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      glow.setAttribute('d', pathData);
+      glow.setAttribute('class', 'link-glow-bg');
+      g.appendChild(glow);
+
+      // Main line
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', pathData);
+      path.setAttribute('class', 'link-line');
+      path.setAttribute('marker-end', 'url(#arrow-default)');
+      g.appendChild(path);
+
+      // Label Pill
+      if (l.label) {
+        const textLen = l.label.length * 8 + 18;
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', midX - textLen / 2);
+        rect.setAttribute('y', midY - 11);
+        rect.setAttribute('width', textLen);
+        rect.setAttribute('height', 22);
+        rect.setAttribute('class', 'link-label-rect');
+        g.appendChild(rect);
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', midX);
+        txt.setAttribute('y', midY);
+        txt.setAttribute('class', 'link-label-text');
+        txt.textContent = l.label;
+        g.appendChild(txt);
+      }
+
+      world.appendChild(g);
+    });
+
+    // 2. Draw Nodes
+    nodes.forEach(n => {
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'node-group');
+      g.setAttribute('id', 'node-' + n.id);
+      g.setAttribute('data-category', n.category);
+
+      g.innerHTML = `
+        <rect class="node-card" x="${n.x}" y="${n.y}" width="${n.width}" height="${n.height}"></rect>
+        <circle cx="${n.x + 22}" cy="${n.y + 24}" r="6" fill="${n.color}"></circle>
+        <text x="${n.x + 36}" y="${n.y + 28}" fill="${n.color}" font-size="10" font-weight="800" letter-spacing="0.75">${n.badge.toUpperCase()}</text>
+        <text x="${n.x + 20}" y="${n.y + 56}" fill="#f8fafc" font-size="15" font-weight="700" font-family="'JetBrains Mono', monospace">${n.title}</text>
+        <text x="${n.x + 20}" y="${n.y + 80}" fill="#94a3b8" font-size="11" font-weight="500">${n.chips[0]}</text>
+      `;
+
+      g.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectNode(n);
+      });
+      world.appendChild(g);
+    });
+
+    // ===== VIEWPORT PAN & ZOOM =====
+    let scale = 0.95;
+    let panX = 40;
+    let panY = 20;
+    let isDragging = false;
+    let startX = 0, startY = 0;
+
+    const container = document.getElementById('canvas-container');
+
+    function updateTransform() {
+      world.setAttribute('transform', 'translate(' + panX + ', ' + panY + ') scale(' + scale + ')');
+    }
+    updateTransform();
+
+    container.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.node-group')) return;
+      isDragging = true;
+      startX = e.clientX - panX;
+      startY = e.clientY - panY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      panX = e.clientX - startX;
+      panY = e.clientY - startY;
+      updateTransform();
+    });
+
+    window.addEventListener('mouseup', () => isDragging = false);
+
+    container.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
+      scale = Math.min(Math.max(0.4, scale * zoomFactor), 2.2);
+      updateTransform();
+    });
+
+    document.getElementById('btn-zoom-in').addEventListener('click', () => { scale = Math.min(2.2, scale * 1.2); updateTransform(); });
+    document.getElementById('btn-zoom-out').addEventListener('click', () => { scale = Math.max(0.4, scale * 0.8); updateTransform(); });
+    document.getElementById('btn-reset').addEventListener('click', () => { scale = 0.95; panX = 40; panY = 20; clearSpotlight(); updateTransform(); });
+
+    // Deselect when clicking background
+    container.addEventListener('click', (e) => {
+      if (!e.target.closest('.node-group')) {
+        clearSpotlight();
+      }
+    });
+
+    // ===== SPOTLIGHT SELECTION EFFECT =====
+    const detailPanel = document.getElementById('detail-panel');
+    const dpClose = document.getElementById('dp-close');
+
+    function clearSpotlight() {
+      document.querySelectorAll('.node-card').forEach(c => {
+        c.classList.remove('selected', 'connected-target', 'connected-source');
+      });
+      document.querySelectorAll('.node-group').forEach(ng => ng.classList.remove('dimmed'));
+      document.querySelectorAll('.link-group').forEach(lg => {
+        lg.classList.remove('dimmed', 'active-flow');
+        const path = lg.querySelector('.link-line');
+        if (path) path.setAttribute('marker-end', 'url(#arrow-default)');
+      });
+      detailPanel.classList.remove('open');
+    }
+
+    function selectNode(n) {
+      clearSpotlight();
+
+      // 1. Highlight chosen node
+      const chosenGrp = document.getElementById('node-' + n.id);
+      const chosenCard = chosenGrp.querySelector('.node-card');
+      chosenCard.classList.add('selected');
+
+      // 2. Find directly connected links and neighbor nodes
+      const outgoingTargets = [];
+      const incomingSources = [];
+
+      document.querySelectorAll('.link-group').forEach(lg => {
+        const from = lg.getAttribute('data-from');
+        const to = lg.getAttribute('data-to');
+        const isFrom = (from === n.id);
+        const isTo = (to === n.id);
+
+        if (isFrom) {
+          outgoingTargets.push(to);
+          lg.classList.add('active-flow');
+          lg.querySelector('.link-line').setAttribute('marker-end', 'url(#arrow-target)');
+        } else if (isTo) {
+          incomingSources.push(from);
+          lg.classList.add('active-flow');
+          lg.querySelector('.link-line').setAttribute('marker-end', 'url(#arrow-source)');
+        } else {
+          lg.classList.add('dimmed');
+        }
+      });
+
+      // 3. Spotlight nodes
+      document.querySelectorAll('.node-group').forEach(ng => {
+        const id = ng.getAttribute('id').replace('node-', '');
+        const card = ng.querySelector('.node-card');
+        if (id === n.id) {
+          // main selected
+        } else if (outgoingTargets.includes(id)) {
+          card.classList.add('connected-target');
+        } else if (incomingSources.includes(id)) {
+          card.classList.add('connected-source');
+        } else {
+          ng.classList.add('dimmed');
+        }
+      });
+
+      // 4. Fill Detail Panel
+      document.getElementById('dp-badge').innerText = n.badge;
+      document.getElementById('dp-badge').style.background = n.color + '22';
+      document.getElementById('dp-badge').style.color = n.color;
+      document.getElementById('dp-title').innerText = n.title;
+      document.getElementById('dp-desc').innerText = n.desc;
+      document.getElementById('dp-path').innerText = n.path;
+
+      const chipsBox = document.getElementById('dp-chips');
+      chipsBox.innerHTML = n.chips.map(c => `<span class="dp-chip">${c}</span>`).join('');
+
+      const depsBox = document.getElementById('dp-deps');
+      depsBox.innerHTML = n.deps.map(d => {
+        return `<span class="dp-conn-chip" onclick="jumpToNode('${d}')"><i class="fas fa-link"></i> ${d}</span>`;
+      }).join('');
+
+      detailPanel.classList.add('open');
+    }
+
+    window.jumpToNode = function(nodeId) {
+      const target = nodes.find(n => n.id === nodeId);
+      if (target) selectNode(target);
+    };
+
+    dpClose.addEventListener('click', clearSpotlight);
+
+    // ===== LAYER FILTER BUTTONS =====
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const layer = btn.getAttribute('data-layer');
+        clearSpotlight();
+
+        document.querySelectorAll('.node-group').forEach(ng => {
+          const cat = ng.getAttribute('data-category');
+          if (layer === 'all' || cat === layer) {
+            ng.classList.remove('dimmed');
+          } else {
+            ng.classList.add('dimmed');
+          }
+        });
+      });
+    });
+
+    // ===== SEARCH FILTER =====
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      if (!q) {
+        clearSpotlight();
+        return;
+      }
+      document.querySelectorAll('.node-group').forEach(ng => {
+        const id = ng.getAttribute('id').toLowerCase();
+        const nodeObj = nodes.find(n => ('node-' + n.id.toLowerCase()) === id);
+        const match = id.includes(q) || (nodeObj && (nodeObj.desc.toLowerCase().includes(q) || nodeObj.chips.some(c => c.toLowerCase().includes(q))));
+        if (match) {
+          ng.classList.remove('dimmed');
+          ng.querySelector('.node-card').classList.add('selected');
+        } else {
+          ng.classList.add('dimmed');
+          ng.querySelector('.node-card').classList.remove('selected');
+        }
+      });
+    });
+
+    // ===== FLOW WALKTHROUGH SELECTOR =====
+    document.getElementById('flow-select').addEventListener('change', (e) => {
+      const flow = e.target.value;
+      clearSpotlight();
+      if (flow === 'none') return;
+
+      const activeNodes = new Set();
+      document.querySelectorAll('.link-group').forEach(lg => {
+        if (lg.getAttribute('data-flow') === flow) {
+          lg.classList.add('active-flow');
+          lg.querySelector('.link-line').setAttribute('marker-end', 'url(#arrow-active)');
+          activeNodes.add(lg.getAttribute('data-from'));
+          activeNodes.add(lg.getAttribute('data-to'));
+        } else {
+          lg.classList.add('dimmed');
+        }
+      });
+
+      document.querySelectorAll('.node-group').forEach(ng => {
+        const id = ng.getAttribute('id').replace('node-', '');
+        if (activeNodes.has(id)) {
+          ng.classList.remove('dimmed');
+          ng.querySelector('.node-card').classList.add('connected-target');
+        } else {
+          ng.classList.add('dimmed');
+        }
+      });
+    });
+
+    // ===== SHARE MODAL LOGIC =====
+    const shareModal = document.getElementById('share-modal');
+    document.getElementById('btn-open-share').addEventListener('click', () => {
+      shareModal.classList.add('open');
+    });
+    document.getElementById('btn-close-share').addEventListener('click', () => {
+      shareModal.classList.remove('open');
+    });
+    shareModal.addEventListener('click', (e) => {
+      if (e.target === shareModal) shareModal.classList.remove('open');
+    });
+
+    // Copy Live Link
+    document.getElementById('btn-copy-url').addEventListener('click', () => {
+      const input = document.getElementById('live-url-input');
+      input.select();
+      navigator.clipboard.writeText(input.value).then(() => {
+        const btn = document.getElementById('btn-copy-url');
+        btn.innerHTML = '<i class="fas fa-check"></i> คัดลอกแล้ว!';
+        setTimeout(() => btn.innerHTML = '<i class="fas fa-copy"></i> คัดลอกลิงก์', 2000);
+      });
+    });
+
+    // Copy Summary Text
+    document.getElementById('btn-copy-summary').addEventListener('click', () => {
+      const box = document.getElementById('summary-text-box');
+      box.select();
+      navigator.clipboard.writeText(box.value).then(() => {
+        const btn = document.getElementById('btn-copy-summary');
+        btn.innerHTML = '<i class="fas fa-check"></i> ก๊อปปี้แล้ว!';
+        setTimeout(() => btn.innerHTML = '<i class="fas fa-copy"></i> ก๊อปปี้ข้อความสรุป', 2000);
+      });
+    });
+
+    // Download Single File HTML
+    document.getElementById('btn-download-html').addEventListener('click', () => {
+      const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'ridecheck-architecture-map.html';
+      a.click();
+    });
+  </script>
+</body>
+</html>

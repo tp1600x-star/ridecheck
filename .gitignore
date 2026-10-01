@@ -1,0 +1,18 @@
+# Dependency directories
+node_modules/
+npm-debug.log*
+
+# Sensitive credentials & environment
+serviceAccountKey*.json
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# User data & runtime logs
+subscribers.json
+*.pid
+*.log
+logs/

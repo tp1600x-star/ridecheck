@@ -1,0 +1,71 @@
+name: RideCheck CI/CD & Automated Production Pipeline
+
+on:
+  schedule:
+    # รันตรวจสอบและอัปเดตอัตโนมัติทุกๆ 30 นาที
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # ปุ่มกดสั่ง Deploy & Test ทันทีด้วยตนเอง
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  test-and-deploy:
+    name: 🧪 Automated Test & Production Deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'package.json'
+
+      - name: 📦 Install Dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: 🧪 Run Automated Pre-Deploy Tests (Zero-Bug Policy)
+        run: |
+          node test-runner.js
+
+      - name: 🤖 Run Autonomous AI Workforce Cycle
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+        run: |
+          node worker-engine.js --once
+
+      - name: 🚀 Deploy to Firebase Hosting (Production)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        if: env.FIREBASE_SERVICE_ACCOUNT != ''
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          channelId: live
+          projectId: ridecheck-thailand
+        env:
+          FIREBASE_CLI_EXPERIMENTS: webframeworks
+
+      - name: 💾 Commit & Push Sync to GitHub
+        run: |
+          git config --local user.email "bot-workforce@ridecheck.th"
+          git config --local user.name "RideCheck Autonomous Bot"
+          git add project-resources.json
+          if git diff --staged --quiet; then
+            echo "ไม่มีการเปลี่ยนแปลงใน project-resources.json ไม่จำเป็นต้อง commit"
+          else
+            git commit -m "🤖 [Automated Workforce] Sync Surge & System Health [skip ci]"
+            git push
+          fi
