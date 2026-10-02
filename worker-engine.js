@@ -40,8 +40,8 @@ const TELEGRAM_TOKENS = Array.from(new Set([
     process.env.TELEGRAM_BARON_BOT_TOKEN,
     process.env.TELEGRAM_COOP_BOT_TOKEN
 ].filter(Boolean)));
-const CEO_USER_ID = parseInt(process.env.CEO_USER_ID || '7041507751', 10);
-const PARTNER_USER_ID = parseInt(process.env.PARTNER_USER_ID || '5471366463', 10);
+const CEO_USER_ID = parseInt(process.env.CEO_USER_ID || '0', 10);
+const PARTNER_USER_ID = parseInt(process.env.PARTNER_USER_ID || '0', 10);
 const EXTRA_RECIPIENTS = (process.env.ADMIN_USER_IDS || '').split(',').map(s => parseInt(s.trim(), 10)).filter(Boolean);
 const REPORT_RECIPIENTS = Array.from(new Set([CEO_USER_ID, PARTNER_USER_ID, ...EXTRA_RECIPIENTS].filter(id => id && id !== 0)));
 
@@ -975,5 +975,3 @@ if (isOnce) {
 
     console.log(`🔄 กำหนดเวลารอบถัดไปในอีก ${intervalMinutes} นาที (กด Ctrl+C เพื่อหยุดการทำงาน)\n`);
 }
-
-module.exports = { executeWorkforceCycle };

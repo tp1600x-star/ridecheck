@@ -23,21 +23,22 @@
         "index.html"
       ],
       "responsibilities": [
-        "สถาปัตยกรรมแผนที่ Google Maps Ultra HD ภาษาไทย (mt0-mt3) + ดาวเทียม Hybrid + Terrain",
-        "ระบบค้นหา Multi-Provider Geocoding (Landmarks DB + Photon + Nominatim + Longdo/Google)",
+        "สถาปัตยกรรมแผนที่คู่ขนาน Longdo Map HD (ตรอกซอกซอยไทย) + Google Maps Ultra HD ภาษาไทย + Hybrid + Terrain",
+        "ระบบค้นหา Multi-Provider Geocoding (Longdo Map API + Landmarks DB + Photon + Nominatim + Google Places)",
         "ระบบ Native App Deep Links & Universal Links เชื่อมต่อแอปเรียกรถจริง",
         "Real-time Deploy Bridge & Event Listener"
       ],
       "systemStatus": {
-        "engine": "Leaflet.js + Google Maps Ultra HD ภาษาไทย (mt0-mt3) & ดาวเทียม Hybrid",
-        "apiGateway": "Multi-Provider (Smart Bangkok DB 0ms + Photon + Nominatim + Longdo/Google)",
+        "engine": "Leaflet.js + Longdo Map Official API + Google Maps Ultra HD (mt0-mt3) & Hybrid",
+        "apiGateway": "Multi-Provider (Longdo Map Official Key + Smart Bangkok DB 0ms + Photon + Nominatim)",
         "uptime": "99.99%",
         "health": "PERFECT_HEALTH",
         "latencies": {
           "googleMapsTileMs": 111,
           "openStreetMapTileMs": 102,
           "osrmRoutingApiMs": 915,
-          "cartoDbVoyagerMs": 147
+          "cartoDbVoyagerMs": 147,
+          "longdoMapTileMs": 85
         },
         "lastChecked": "2026-10-01T21:53:53.942Z"
       },

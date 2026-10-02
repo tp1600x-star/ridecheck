@@ -11,8 +11,10 @@
 
 ## 🌟 ฟีเจอร์เด่น (Key Features)
 
-1. **⚡ Real-Time Price Comparison Engine (`index.html`)**
-   - คำนวณเส้นทางและระยะทางด้วย Leaflet, OSRM และรองรับ Google Maps Platform
+1. **⚡ Real-Time Price Comparison Engine (`index.html` / `v2.html`)**
+   - แผนที่คู่ขนาน **Longdo Map HD** (เจาะลึกตรอกซอกซอยไทย 77 จังหวัด) + **Google Maps Ultra HD** (Street, Satellite Hybrid, Terrain)
+   - ระบบค้นหาอัจฉริยะ **Multi-Provider Geocoding** (Longdo Map Search & Address API, Landmarks DB 0ms, Photon, Nominatim, Google Places)
+   - คำนวณเส้นทางและระยะทางด้วย Leaflet, OSRM และรองรับระบบนำทางชั้นนำ
    - เปรียบเทียบราคารถทุกประเภท (Eco / Compact, Sedan, Premium, Bike, SUV, XL)
    - Dynamic Surge Pricing & Weather Impact คำนวณผลกระทบของฝนตกและช่วงเวลาเร่งด่วนตามพิกัดจริง
    - Zero Data Loss: เก็บสถิติยอดประหยัดสะสมลง Firestore หรือ fallback เป็น localStorage ออฟไลน์

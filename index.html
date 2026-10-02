@@ -3085,8 +3085,32 @@
             className: 'custom-pin-marker'
         });
 
-        // ===== REVERSE GEOCODING HELPER (THAILAND NATIONWIDE 77 PROVINCES) =====
+        // ===== REVERSE GEOCODING HELPER (LONGDO MAP API + THAILAND NATIONWIDE 77 PROVINCES) =====
         async function reverseGeocodeName(lat, lng) {
+            const longdoKey = localStorage.getItem('ridecheck_longdo_api_key') || 'f77758635505616dd7ce9ebf39090e7c';
+            if (longdoKey) {
+                try {
+                    const lUrl = `https://api.longdo.com/map/services/address?lon=${lng}&lat=${lat}&key=${encodeURIComponent(longdoKey)}`;
+                    const lRes = await fetch(lUrl);
+                    if (lRes.ok) {
+                        const lData = await lRes.json();
+                        if (lData && (lData.aoi || lData.road || lData.subdistrict || lData.district)) {
+                            const parts = [];
+                            if (lData.aoi) parts.push(lData.aoi);
+                            if (lData.road) parts.push(lData.road.startsWith('ถ.') || lData.road.startsWith('ถนน') ? lData.road : `ถ.${lData.road}`);
+                            if (lData.subdistrict) parts.push(lData.subdistrict);
+                            if (lData.district) parts.push(lData.district);
+                            if (lData.province && lData.province !== lData.district) parts.push(lData.province);
+                            if (parts.length > 0) {
+                                return parts.slice(0, 3).join(', ');
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Longdo reverse geocode fallback to OSM:', e);
+                }
+            }
+
             try {
                 const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=17&addressdetails=1&countrycodes=th&accept-language=th`;
                 const res = await fetch(url, { headers: { 'User-Agent': 'RideCheck-Thailand/2.0' } });
@@ -3176,7 +3200,16 @@
                 // Leaflet zoom controls at bottom-right
                 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-                // 1. แผนที่ถนน Google Maps ภาษาไทย (คมชัดระดับซอย ซอกตึก และอาคาร โหลดคู่ขนาน 4 เซิร์ฟเวอร์)
+                const activeLongdoKey = localStorage.getItem('ridecheck_longdo_api_key') || 'f77758635505616dd7ce9ebf39090e7c';
+
+                // 1. Longdo Map แผนที่ประเทศไทยความละเอียดสูงระดับซอกซอย (Official Longdo Map API Key)
+                const longdoStreet = L.tileLayer(`https://ms.longdo.com/mmmap/img.php?zoom={z}&x={x}&y={y}&mode=icons&key=${activeLongdoKey}&proj=epsg3857&HD=1`, {
+                    attribution: '&copy; <a href="https://map.longdo.com/" target="_blank">Longdo Map</a> (Thailand HD)',
+                    maxZoom: 20,
+                    maxNativeZoom: 19
+                });
+
+                // 2. แผนที่ถนน Google Maps ภาษาไทย (คมชัดระดับซอย ซอกตึก และอาคาร โหลดคู่ขนาน 4 เซิร์ฟเวอร์)
                 const googleStreet = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl=th&gl=th&x={x}&y={y}&z={z}', {
                     attribution: '&copy; Google Maps (Thailand)',
                     maxZoom: 22,
@@ -3184,7 +3217,7 @@
                     subdomains: ['0', '1', '2', '3']
                 });
 
-                // 2. Google Maps ภาพถ่ายดาวเทียมผสมชื่อถนนและซอย (Hybrid คมชัดสูง เห็นซอกซอย ทางเข้าคอนโด และจุดรับส่งจริง)
+                // 3. Google Maps ภาพถ่ายดาวเทียมผสมชื่อถนนและซอย (Hybrid คมชัดสูง เห็นซอกซอย ทางเข้าคอนโด และจุดรับส่งจริง)
                 const googleHybrid = L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&hl=th&gl=th&x={x}&y={y}&z={z}', {
                     attribution: '&copy; Google Maps (Satellite Hybrid)',
                     maxZoom: 22,
@@ -3192,7 +3225,7 @@
                     subdomains: ['0', '1', '2', '3']
                 });
 
-                // 3. Google Maps ผังเมืองและภูมิประเทศ (Terrain & Elevation Contour)
+                // 4. Google Maps ผังเมืองและภูมิประเทศ (Terrain & Elevation Contour)
                 const googleTerrain = L.tileLayer('https://mt{s}.google.com/vt/lyrs=p&hl=th&gl=th&x={x}&y={y}&z={z}', {
                     attribution: '&copy; Google Maps (Terrain)',
                     maxZoom: 20,
@@ -3200,7 +3233,7 @@
                     subdomains: ['0', '1', '2', '3']
                 });
 
-                // 4. CartoDB Voyager (สวยงาม ทันสมัย คมชัด Retina โหลดไว 100% ไม่ติดบล็อก)
+                // 5. CartoDB Voyager (สวยงาม ทันสมัย คมชัด Retina โหลดไว 100% ไม่ติดบล็อก)
                 const cartoVoyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                     attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap',
                     maxZoom: 22,
@@ -3208,19 +3241,20 @@
                     subdomains: 'abcd'
                 });
 
-                // 5. OpenStreetMap Standard (Official Global CDN, Reliable)
+                // 6. OpenStreetMap Standard (Official Global CDN, Reliable)
                 const osmStandard = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                     maxZoom: 22,
                     maxNativeZoom: 19
                 });
 
-                // Add Default Layer: Google Maps ถนนและซอย ภาษาไทย
-                googleStreet.addTo(map);
+                // Add Default Layer: Longdo Map แผนที่ไทย (เจาะลึกตรอกซอกซอย)
+                longdoStreet.addTo(map);
 
                 // Layer Switcher Control (สลับมุมมองแผนที่ได้ตามต้องการ)
                 const baseMaps = {
-                    "🗺️ Google Maps ถนนและซอย (แนะนำ)": googleStreet,
+                    "🇹🇭 Longdo Map (แผนที่ไทย ละเอียดลึกทุกซอกซอย)": longdoStreet,
+                    "🗺️ Google Maps ถนนและซอย (HD ภาษาไทย)": googleStreet,
                     "🛰️ Google Maps ดาวเทียม + ป้ายชื่อซอย (Hybrid)": googleHybrid,
                     "🏔️ Google Maps ภูมิประเทศและผังเมือง (Terrain)": googleTerrain,
                     "🌟 CartoDB Voyager (คมชัดสูง)": cartoVoyager,
@@ -4600,16 +4634,18 @@
             if (results) results.style.display = 'none';
         }
 
+        const DEFAULT_LONGDO_KEY = 'f77758635505616dd7ce9ebf39090e7c';
+
         function getActiveSearchProvider() {
-            return localStorage.getItem('ridecheck_search_provider') || 'smart_osm';
+            return localStorage.getItem('ridecheck_search_provider') || 'longdo';
         }
 
         function updateProviderLabel() {
             const labelEl = document.getElementById('active-provider-label');
             if (!labelEl) return;
             const prov = getActiveSearchProvider();
-            if (prov === 'smart_osm') labelEl.innerHTML = '⚡ Smart Search';
-            else if (prov === 'longdo') labelEl.innerHTML = '🇹🇭 Longdo Map';
+            if (prov === 'longdo') labelEl.innerHTML = '🇹🇭 Longdo Map';
+            else if (prov === 'smart_osm') labelEl.innerHTML = '⚡ Smart Search';
             else if (prov === 'google') labelEl.innerHTML = '🌐 Google Places';
             else if (prov === 'nominatim') labelEl.innerHTML = '🌍 OSM Nominatim';
         }
@@ -4620,7 +4656,7 @@
             const activeProv = getActiveSearchProvider();
             selectSearchProvider(activeProv);
             
-            const longdoKey = localStorage.getItem('ridecheck_longdo_api_key') || '';
+            const longdoKey = localStorage.getItem('ridecheck_longdo_api_key') || DEFAULT_LONGDO_KEY;
             const googleKey = localStorage.getItem('ridecheck_google_api_key') || '';
             const longdoInput = document.getElementById('longdo-api-key');
             if (longdoInput) longdoInput.value = longdoKey;
@@ -4776,21 +4812,29 @@
                 let onlineResults = [];
 
                 if (provider === 'longdo') {
-                    const longdoKey = localStorage.getItem('ridecheck_longdo_api_key');
+                    const longdoKey = localStorage.getItem('ridecheck_longdo_api_key') || DEFAULT_LONGDO_KEY;
                     if (longdoKey) {
-                        const url = `/api/proxy-geocode?provider=longdo&q=${encodeURIComponent(cleanQuery)}&key=${encodeURIComponent(longdoKey)}`;
-                        const res = await fetch(url, { signal: currentSearchAbortController.signal });
-                        if (res.ok) {
-                            const data = await res.json();
-                            if (data && data.data) {
-                                onlineResults = data.data.map(item => ({
-                                    name: item.name,
-                                    sub: item.address || 'Longdo Map Verified',
-                                    lat: parseFloat(item.lat),
-                                    lon: parseFloat(item.lon),
-                                    source: '🇹🇭 Longdo'
-                                }));
-                            }
+                        let data = null;
+                        try {
+                            const directUrl = `https://search.longdo.com/mapsearch/json/search?keyword=${encodeURIComponent(cleanQuery)}&key=${encodeURIComponent(longdoKey)}&limit=10`;
+                            const directRes = await fetch(directUrl, { signal: currentSearchAbortController.signal });
+                            if (directRes.ok) data = await directRes.json();
+                        } catch (err) {
+                            try {
+                                const proxyUrl = `/api/proxy-geocode?provider=longdo&q=${encodeURIComponent(cleanQuery)}&key=${encodeURIComponent(longdoKey)}`;
+                                const proxyRes = await fetch(proxyUrl, { signal: currentSearchAbortController.signal });
+                                if (proxyRes.ok) data = await proxyRes.json();
+                            } catch (err2) {}
+                        }
+
+                        if (data && data.data && data.data.length > 0) {
+                            onlineResults = data.data.map(item => ({
+                                name: item.name,
+                                sub: item.address || (item.type ? `หมวดหมู่: ${item.type}` : '🇹🇭 Longdo Map Verified (ครอบคลุมตรอกซอกซอย)'),
+                                lat: parseFloat(item.lat),
+                                lon: parseFloat(item.lon),
+                                source: '🇹🇭 Longdo'
+                            }));
                         }
                     }
                 } else if (provider === 'google') {
@@ -5560,13 +5604,14 @@
                     <div style="flex:1;">
                         <div class="provider-info-title">
                             <span>🇹🇭 Longdo Map API (ของไทย • แม่นตรอกซอยที่สุด)</span>
+                            <span class="service-pill" style="color:#059669; background:#ECFDF5; border-color:#A7F3D0;">พร้อมใช้ (Official Key)</span>
                         </div>
                         <div class="provider-info-desc">
-                            ฐานข้อมูลแผนที่สัญชาติไทย แม่นยำเรื่องตรอกซอย เลขที่บ้าน หมู่บ้าน และชื่อภาษาไทยมากที่สุด
+                            ฐานข้อมูลแผนที่สัญชาติไทย ละเอียดลึกถึงตรอก ซอย ซอกตึก เลขที่บ้าน และจุดรับส่งทั่วประเทศ
                         </div>
                         <div class="settings-input-group" id="longdo-input-group" style="display:none;" onclick="event.stopPropagation()">
                             <label for="longdo-api-key">Longdo Map API Key:</label>
-                            <input type="text" id="longdo-api-key" placeholder="ใส่ Key ของท่าน เช่น 7f2a89... (ขอฟรีที่ map.longdo.com)">
+                            <input type="text" id="longdo-api-key" value="f77758635505616dd7ce9ebf39090e7c" placeholder="f77758635505616dd7ce9ebf39090e7c">
                         </div>
                     </div>
                 </div>

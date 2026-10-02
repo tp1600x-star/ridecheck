@@ -46,8 +46,8 @@ for (const envPath of possibleEnvPaths) {
 }
 
 if (!TOKEN) TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_TOKEN || '';
-const CEO_USER_ID = parseInt(process.env.CEO_USER_ID || '7041507751', 10);
-const PARTNER_USER_ID = parseInt(process.env.PARTNER_USER_ID || '5471366463', 10);
+const CEO_USER_ID = parseInt(process.env.CEO_USER_ID || '0', 10);
+const PARTNER_USER_ID = parseInt(process.env.PARTNER_USER_ID || '0', 10);
 
 // รายชื่อผู้บริหารที่มีสิทธิ์สั่งงานบอทบารอนและ 14 แผนก
 const ALLOWED_ADMINS = [CEO_USER_ID, PARTNER_USER_ID].filter(id => id > 0);
@@ -796,5 +796,3 @@ async function startBotEngine() {
 }
 
 startBotEngine();
-
-module.exports = { startBotEngine };

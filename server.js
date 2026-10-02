@@ -71,13 +71,32 @@ const server = http.createServer((req, res) => {
             return;
         }
 
-        if (provider === 'longdo' && key && q) {
-            const lUrl = `https://search.longdo.com/mapsearch/json/search?keyword=${encodeURIComponent(q)}&key=${encodeURIComponent(key)}&limit=6`;
+        if (provider === 'longdo' && q) {
+            const longdoKey = key || process.env.LONGDO_MAP_KEY || 'f77758635505616dd7ce9ebf39090e7c';
+            const lUrl = `https://search.longdo.com/mapsearch/json/search?keyword=${encodeURIComponent(q)}&key=${encodeURIComponent(longdoKey)}&limit=10`;
             https.get(lUrl, (lRes) => {
                 let body = '';
                 lRes.on('data', c => body += c);
                 lRes.on('end', () => {
                     res.writeHead(lRes.statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
+                    res.end(body);
+                });
+            }).on('error', (e) => {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: e.message }));
+            });
+            return;
+        }
+        if (provider === 'longdo-address') {
+            const lat = parsedUrl.searchParams.get('lat');
+            const lon = parsedUrl.searchParams.get('lon');
+            const longdoKey = key || process.env.LONGDO_MAP_KEY || 'f77758635505616dd7ce9ebf39090e7c';
+            const aUrl = `https://api.longdo.com/map/services/address?lon=${encodeURIComponent(lon)}&lat=${encodeURIComponent(lat)}&key=${encodeURIComponent(longdoKey)}`;
+            https.get(aUrl, (aRes) => {
+                let body = '';
+                aRes.on('data', c => body += c);
+                aRes.on('end', () => {
+                    res.writeHead(aRes.statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
                     res.end(body);
                 });
             }).on('error', (e) => {
