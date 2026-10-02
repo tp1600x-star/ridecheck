@@ -33,6 +33,29 @@ const bridge = require('./firebase-bridge');
 const ROOT_DIR = __dirname;
 const LOGS_DIR = path.join(ROOT_DIR, 'logs');
 
+// Load environment variables from .env
+const possibleEnvPaths = [
+  path.join(__dirname, '.env'),
+  path.join(process.cwd(), '.env'),
+  'C:\\Ridecheck\\.env'
+];
+for (const envPath of possibleEnvPaths) {
+  try {
+    if (fs.existsSync(envPath)) {
+      const envLines = fs.readFileSync(envPath, 'utf8').split('\n');
+      for (const line of envLines) {
+        const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+        if (match) {
+          const key = match[1];
+          let value = match[2] || '';
+          value = value.trim().replace(/^["']|["']$/g, '');
+          if (!process.env[key]) process.env[key] = value;
+        }
+      }
+    }
+  } catch (e) {}
+}
+
 // Telegram Notification Config (Driven purely by environment variables)
 const TELEGRAM_TOKENS = Array.from(new Set([
     process.env.TELEGRAM_TOKEN,
