@@ -632,6 +632,71 @@
       font-size: 0.85rem;
       outline: none;
     }
+  
+    /* Dynamic Point Interface Particle System (Task Flow) */
+    .task-flow-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.85);
+      color: var(--text-dim);
+      transition: all 0.25s ease;
+    }
+    .task-flow-pill.running {
+      border-color: #F59E0B;
+      color: #FDE68A;
+      background: rgba(245, 158, 11, 0.15);
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.35);
+    }
+    .task-flow-pill.idle {
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #A7F3D0;
+    }
+    .task-flow-pill .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10B981;
+    }
+    .task-flow-pill.running .pulse-dot {
+      background: #F59E0B;
+      box-shadow: 0 0 8px #F59E0B;
+      animation: blink 0.8s infinite ease-in-out;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; transform: scale(1.1); }
+      50% { opacity: 0.3; transform: scale(0.9); }
+    }
+    .flow-pill-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .flow-pill-btn:hover {
+      border-color: #38BDF8;
+      color: #38BDF8;
+      background: rgba(56, 189, 248, 0.15);
+    }
+    .flow-pill-btn.stop {
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #F87171;
+    }
+    .flow-pill-btn.stop:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #FFF;
+    }
+
   </style>
 </head>
 <body>
@@ -651,6 +716,17 @@
 
     <!-- Controls -->
     <div class="controls-bar">
+      <!-- Live Task Point Interface Status -->
+      <div class="task-flow-pill idle" id="codemap-status-pill">
+        <span class="pulse-dot"></span>
+        <span id="codemap-status-text">◌ ไม่มีงานค้างท่อ (0 งานรัน · ไม่มีจุดวิ่ง)</span>
+      </div>
+      <div style="display: flex; gap: 5px;">
+        <button class="flow-pill-btn" onclick="setCodemapActiveTasks(1)">● 1 งาน (1 จุด)</button>
+        <button class="flow-pill-btn" onclick="setCodemapActiveTasks(3)">●●● 3 งาน (3 จุด)</button>
+        <button class="flow-pill-btn" onclick="setCodemapActiveTasks(5)">⚡ 5 งาน (5 จุด)</button>
+        <button class="flow-pill-btn stop" onclick="setCodemapActiveTasks(0)"><i class="fas fa-stop"></i> หยุดงาน (0 จุด)</button>
+      </div>
       <div class="search-box">
         <i class="fas fa-search"></i>
         <input type="text" id="search-input" placeholder="ค้นหาไฟล์ หรือหน้าที่...">
@@ -1320,6 +1396,107 @@
       a.download = 'ridecheck-architecture-map.html';
       a.click();
     });
+  
+    // =========================================================================
+    // DYNAMIC POINT INTERFACE PARTICLE ENGINE (NUMBER OF POINTS = NUMBER OF ACTIVE TASKS)
+    // =========================================================================
+    let codemapActiveTasks = 0;
+    let createdPathElements = [];
+    let activeParticles = [];
+    let codemapAnimFrame = null;
+
+    // Filter definition in SVG
+    const defs = document.querySelector('#map-svg defs');
+    if (defs && !document.getElementById('particle-glow-filter')) {
+      const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+      filter.setAttribute('id', 'particle-glow-filter');
+      filter.setAttribute('x', '-50%');
+      filter.setAttribute('y', '-50%');
+      filter.setAttribute('width', '200%');
+      filter.setAttribute('height', '200%');
+      filter.innerHTML = '<feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>';
+      defs.appendChild(filter);
+    }
+
+    const particlesLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    particlesLayer.setAttribute('id', 'codemap-particles-layer');
+    world.appendChild(particlesLayer);
+
+    class CodemapPointParticle {
+      constructor(pathEl, color = '#F97316', speed = 0.012) {
+        this.pathEl = pathEl;
+        this.totalLength = pathEl.getTotalLength();
+        this.progress = Math.random();
+        this.speed = speed + (Math.random() * 0.004);
+        this.circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        this.circle.setAttribute('r', '5');
+        this.circle.setAttribute('fill', color);
+        this.circle.setAttribute('filter', 'url(#particle-glow-filter)');
+        particlesLayer.appendChild(this.circle);
+      }
+
+      update() {
+        this.progress += this.speed;
+        if (this.progress > 1) this.progress = 0;
+        const pt = this.pathEl.getPointAtLength(this.progress * this.totalLength);
+        this.circle.setAttribute('cx', pt.x);
+        this.circle.setAttribute('cy', pt.y);
+      }
+
+      destroy() {
+        if (this.circle && this.circle.parentNode) {
+          this.circle.parentNode.removeChild(this.circle);
+        }
+      }
+    }
+
+    window.setCodemapActiveTasks = function(count) {
+      codemapActiveTasks = count;
+      const pill = document.getElementById('codemap-status-pill');
+      const text = document.getElementById('codemap-status-text');
+
+      // 1. Destroy existing particles
+      activeParticles.forEach(p => p.destroy());
+      activeParticles = [];
+
+      if (count === 0) {
+        // STRICT RULE: If no tasks, NO particles travel!
+        if (pill) pill.className = 'task-flow-pill idle';
+        if (text) text.innerText = '◌ ไม่มีงานค้างท่อ (0 งานรัน · ไม่มีจุดวิ่ง)';
+        if (codemapAnimFrame) {
+          cancelAnimationFrame(codemapAnimFrame);
+          codemapAnimFrame = null;
+        }
+        return;
+      }
+
+      // If count > 0, spawn EXACTLY count particles along available paths!
+      if (pill) pill.className = 'task-flow-pill running';
+      if (text) text.innerHTML = `⚡ กำลังรันงาน: <b>${count} งาน</b> (${count} จุดวิ่งบนผัง)`;
+
+      const allPathLines = Array.from(document.querySelectorAll('.link-line'));
+      if (allPathLines.length === 0) return;
+
+      for (let i = 0; i < count; i++) {
+        const path = allPathLines[i % allPathLines.length];
+        const color = (i % 2 === 0) ? '#F97316' : '#38BDF8';
+        const p = new CodemapPointParticle(path, color, 0.008);
+        activeParticles.push(p);
+      }
+
+      if (!codemapAnimFrame) {
+        function loop() {
+          if (activeParticles.length === 0) {
+            codemapAnimFrame = null;
+            return;
+          }
+          activeParticles.forEach(p => p.update());
+          codemapAnimFrame = requestAnimationFrame(loop);
+        }
+        codemapAnimFrame = requestAnimationFrame(loop);
+      }
+    };
+
   </script>
 </body>
 </html>
