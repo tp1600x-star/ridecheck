@@ -72,14 +72,17 @@ async function runTestSuite() {
     assert(hasAllApps, 'มีข้อมูลราคารถจักรยานยนต์ครบทั้ง 5 ค่าย (Grab, Bolt, LINE MAN, Maxim, inDrive)');
   }
 
-  // Test 3: ตรวจสอบ Deep Links & Universal Links และระบบแผนที่ Google Maps
-  console.log('\n🔍 Group 3: Frontend Deep Links & Google Maps Integration');
+  // Test 3: ตรวจสอบ Deep Links & ระบบแผนที่ Longdo Map (หลัก) และ Google Maps
+  console.log('\n🔍 Group 3: Frontend Deep Links & Map Engines (Longdo Map Primary + Google Maps)');
   try {
     const indexContent = fs.readFileSync(path.join(ROOT_DIR, 'index.html'), 'utf8');
     assert(indexContent.includes('grab.com') || indexContent.includes('grab://'), 'มีลิงก์เชื่อมต่อไปยัง Grab');
     assert(indexContent.includes('bolt.eu') || indexContent.includes('bolt://'), 'มีลิงก์เชื่อมต่อไปยัง Bolt');
     assert(indexContent.includes('lineman') || indexContent.includes('lineman://'), 'มีลิงก์เชื่อมต่อไปยัง LINE MAN');
     assert(indexContent.includes('leaflet'), 'มีการโหลดไลบรารีแผนที่ Leaflet.js');
+    assert(indexContent.includes('ms.longdo.com/mmmap/img.php') && indexContent.includes('f77758635505616dd7ce9ebf39090e7c'), 'เชื่อมต่อ TH Longdo Map API แผนที่หลักความละเอียดสูงระดับซอกซอย (Official Key)');
+    assert(indexContent.includes('prov-card-longdo') && indexContent.includes('⭐ แผนที่หลักแนะนำ'), 'ตั้งค่า Longdo Map เป็น Search Provider และ Geocoding หลักอันดับ 1');
+    assert(indexContent.includes('longdo-address'), 'มีระบบ Longdo Reverse Geocoding แปลงพิกัดเป็นชื่อซอย/ถนนภาษาไทย');
     assert(indexContent.includes('mt{s}.google.com') && indexContent.includes('lyrs=m') && indexContent.includes('hl=th'), 'เชื่อมต่อ Google Maps ถนนและซอกซอย (ภาษาไทย คมชัดระดับซอย)');
     assert(indexContent.includes('lyrs=y'), 'มีเลเยอร์ Google Maps Hybrid ภาพถ่ายดาวเทียมผสมชื่อซอย');
     assert(indexContent.includes('สุขุมวิท 11') && indexContent.includes('ทองหล่อ 10') && indexContent.includes('ซอยอารีย์'), 'มีฐานข้อมูลซอกซอยยอดนิยมในกรุงเทพฯ ครบถ้วน');

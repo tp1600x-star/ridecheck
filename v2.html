@@ -2904,7 +2904,7 @@
                     </button>
                     <button type="button" class="search-provider-badge-btn" id="search-settings-trigger" onclick="openSearchSettingsModal()" title="คลิกเพื่อเลือก Search Engine / ใส่ API Key (Google, Longdo, Smart OSM)">
                         <i class="fas fa-sliders" style="color:var(--primary);"></i>
-                        <span id="active-provider-label">⚡ Smart<span class="hide-mobile"> Search</span></span>
+                        <span id="active-provider-label">🇹🇭 Longdo<span class="hide-mobile"> Map (หลัก)</span></span>
                     </button>
                 </div>
 
@@ -3090,20 +3090,26 @@
             const longdoKey = localStorage.getItem('ridecheck_longdo_api_key') || 'f77758635505616dd7ce9ebf39090e7c';
             if (longdoKey) {
                 try {
-                    const lUrl = `https://api.longdo.com/map/services/address?lon=${lng}&lat=${lat}&key=${encodeURIComponent(longdoKey)}`;
-                    const lRes = await fetch(lUrl);
-                    if (lRes.ok) {
-                        const lData = await lRes.json();
-                        if (lData && (lData.aoi || lData.road || lData.subdistrict || lData.district)) {
-                            const parts = [];
-                            if (lData.aoi) parts.push(lData.aoi);
-                            if (lData.road) parts.push(lData.road.startsWith('ถ.') || lData.road.startsWith('ถนน') ? lData.road : `ถ.${lData.road}`);
-                            if (lData.subdistrict) parts.push(lData.subdistrict);
-                            if (lData.district) parts.push(lData.district);
-                            if (lData.province && lData.province !== lData.district) parts.push(lData.province);
-                            if (parts.length > 0) {
-                                return parts.slice(0, 3).join(', ');
-                            }
+                    let lData = null;
+                    try {
+                        const lUrl = `https://api.longdo.com/map/services/address?lon=${lng}&lat=${lat}&key=${encodeURIComponent(longdoKey)}`;
+                        const lRes = await fetch(lUrl);
+                        if (lRes.ok) lData = await lRes.json();
+                    } catch (netErr) {
+                        const proxyUrl = `/api/proxy-geocode?provider=longdo-address&lat=${lat}&lon=${lng}&key=${encodeURIComponent(longdoKey)}`;
+                        const proxyRes = await fetch(proxyUrl);
+                        if (proxyRes.ok) lData = await proxyRes.json();
+                    }
+
+                    if (lData && (lData.aoi || lData.road || lData.subdistrict || lData.district)) {
+                        const parts = [];
+                        if (lData.aoi) parts.push(lData.aoi);
+                        if (lData.road) parts.push(lData.road.startsWith('ถ.') || lData.road.startsWith('ถนน') ? lData.road : `ถ.${lData.road}`);
+                        if (lData.subdistrict) parts.push(lData.subdistrict);
+                        if (lData.district) parts.push(lData.district);
+                        if (lData.province && lData.province !== lData.district) parts.push(lData.province);
+                        if (parts.length > 0) {
+                            return parts.slice(0, 3).join(', ');
                         }
                     }
                 } catch (e) {
@@ -3253,7 +3259,7 @@
 
                 // Layer Switcher Control (สลับมุมมองแผนที่ได้ตามต้องการ)
                 const baseMaps = {
-                    "🇹🇭 Longdo Map (แผนที่ไทย ละเอียดลึกทุกซอกซอย)": longdoStreet,
+                    "⭐ 🇹🇭 Longdo Map (แผนที่หลัก แนะนำ • ละเอียดลึกทุกซอกซอย)": longdoStreet,
                     "🗺️ Google Maps ถนนและซอย (HD ภาษาไทย)": googleStreet,
                     "🛰️ Google Maps ดาวเทียม + ป้ายชื่อซอย (Hybrid)": googleHybrid,
                     "🏔️ Google Maps ภูมิประเทศและผังเมือง (Terrain)": googleTerrain,
@@ -4590,10 +4596,10 @@
             const labelEl = document.getElementById('active-provider-label');
             if (!labelEl) return;
             const prov = getActiveSearchProvider();
-            if (prov === 'longdo') labelEl.innerHTML = '🇹🇭 Longdo Map';
-            else if (prov === 'smart_osm') labelEl.innerHTML = '⚡ Smart Search';
-            else if (prov === 'google') labelEl.innerHTML = '🌐 Google Places';
-            else if (prov === 'nominatim') labelEl.innerHTML = '🌍 OSM Nominatim';
+            if (prov === 'longdo') labelEl.innerHTML = '🇹🇭 Longdo<span class="hide-mobile"> Map (หลัก)</span>';
+            else if (prov === 'smart_osm') labelEl.innerHTML = '⚡ Smart<span class="hide-mobile"> Search</span>';
+            else if (prov === 'google') labelEl.innerHTML = '🌐 Google<span class="hide-mobile"> Places</span>';
+            else if (prov === 'nominatim') labelEl.innerHTML = '🌍 OSM<span class="hide-mobile"> Nominatim</span>';
         }
 
         function openSearchSettingsModal() {
@@ -4617,7 +4623,7 @@
             if (modal) modal.classList.remove('active');
         }
 
-        let tempSelectedProvider = 'smart_osm';
+        let tempSelectedProvider = 'longdo';
         function selectSearchProvider(provId) {
             tempSelectedProvider = provId;
             ['smart_osm', 'longdo', 'google', 'nominatim'].forEach(id => {
@@ -4782,6 +4788,32 @@
                                 source: '🇹🇭 Longdo'
                             }));
                         }
+                    }
+
+                    // Smart Fallback if Longdo returns 0 results for rare terms
+                    if (onlineResults.length === 0) {
+                        const center = (map && typeof map.getCenter === 'function') ? map.getCenter() : { lat: 13.7563, lng: 100.5018 };
+                        try {
+                            const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQuery)}&lat=${center.lat}&lon=${center.lng}&limit=6`;
+                            const pRes = await fetch(photonUrl, { signal: currentSearchAbortController.signal });
+                            if (pRes.ok) {
+                                const pData = await pRes.json();
+                                if (pData && pData.features && pData.features.length > 0) {
+                                    pData.features.forEach(f => {
+                                        const p = f.properties || {};
+                                        const title = p.name || p.street || cleanQuery;
+                                        const subParts = [p.street, p.district, p.city, p.state, p.country].filter(Boolean);
+                                        onlineResults.push({
+                                            name: title,
+                                            sub: subParts.length > 0 ? subParts.join(', ') : 'ประเทศไทย',
+                                            lat: f.geometry.coordinates[1],
+                                            lon: f.geometry.coordinates[0],
+                                            source: '⚡ สำรอง'
+                                        });
+                                    });
+                                }
+                            }
+                        } catch(e) {}
                     }
                 } else if (provider === 'google') {
                     const googleKey = localStorage.getItem('ridecheck_google_api_key');
@@ -5530,34 +5562,35 @@
                     เลือกบริการที่ใช้แปลงชื่อสถานที่/ซอยเป็นพิกัด (Geocoding) เพื่อความแม่นยำและไม่ติด Rate Limit:
                 </div>
 
-                <!-- Provider 1: Smart OSM + Landmark DB (Default) -->
-                <div class="provider-choice-card selected" id="prov-card-smart_osm" onclick="selectSearchProvider('smart_osm')">
-                    <div class="provider-radio-dot"></div>
-                    <div style="flex:1;">
-                        <div class="provider-info-title">
-                            <span>⚡ Smart Geocoder (ฟรี • ไวสุด • แนะนำ)</span>
-                            <span class="service-pill" style="color:#059669; background:#ECFDF5; border-color:#A7F3D0;">พร้อมใช้ทันที</span>
-                        </div>
-                        <div class="provider-info-desc">
-                            ผสานฐานข้อมูลแลนด์มาร์กกรุงเทพฯ ในตัว (0ms) + Photon Autocomplete (OSM) ตอบสนองเร็ว ไม่ติด Rate Limit 1 req/sec และมี Local Cache
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Provider 2: Longdo Map API (Thailand Specialist) -->
-                <div class="provider-choice-card" id="prov-card-longdo" onclick="selectSearchProvider('longdo')">
+                <!-- Provider 1: Longdo Map API (Thailand Specialist - Primary Default) -->
+                <div class="provider-choice-card selected" id="prov-card-longdo" onclick="selectSearchProvider('longdo')">
                     <div class="provider-radio-dot"></div>
                     <div style="flex:1;">
                         <div class="provider-info-title">
                             <span>🇹🇭 Longdo Map API (ของไทย • แม่นตรอกซอยที่สุด)</span>
-                            <span class="service-pill" style="color:#059669; background:#ECFDF5; border-color:#A7F3D0;">พร้อมใช้ (Official Key)</span>
+                            <span class="service-pill" style="color:#059669; background:#ECFDF5; border-color:#A7F3D0;">⭐ แผนที่หลักแนะนำ (Default Primary)</span>
+                            <span class="service-pill" style="color:#0284C7; background:#E0F2FE; border-color:#BAE6FD;">พร้อมใช้ (Official Key)</span>
                         </div>
                         <div class="provider-info-desc">
                             ฐานข้อมูลแผนที่สัญชาติไทย ละเอียดลึกถึงตรอก ซอย ซอกตึก เลขที่บ้าน และจุดรับส่งทั่วประเทศ
                         </div>
-                        <div class="settings-input-group" id="longdo-input-group" style="display:none;" onclick="event.stopPropagation()">
+                        <div class="settings-input-group" id="longdo-input-group" style="display:flex;" onclick="event.stopPropagation()">
                             <label for="longdo-api-key">Longdo Map API Key:</label>
                             <input type="text" id="longdo-api-key" value="f77758635505616dd7ce9ebf39090e7c" placeholder="f77758635505616dd7ce9ebf39090e7c">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Provider 2: Smart OSM + Landmark DB -->
+                <div class="provider-choice-card" id="prov-card-smart_osm" onclick="selectSearchProvider('smart_osm')">
+                    <div class="provider-radio-dot"></div>
+                    <div style="flex:1;">
+                        <div class="provider-info-title">
+                            <span>⚡ Smart Geocoder (ฟรี • ไวสุด • สำรอง)</span>
+                            <span class="service-pill" style="color:#059669; background:#ECFDF5; border-color:#A7F3D0;">พร้อมใช้ทันที</span>
+                        </div>
+                        <div class="provider-info-desc">
+                            ผสานฐานข้อมูลแลนด์มาร์กกรุงเทพฯ ในตัว (0ms) + Photon Autocomplete (OSM) ตอบสนองเร็ว ไม่ติด Rate Limit 1 req/sec และมี Local Cache
                         </div>
                     </div>
                 </div>
