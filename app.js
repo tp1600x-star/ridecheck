@@ -108,18 +108,28 @@ function calcDistance(lat1, lng1, lat2, lng2) {
     return R * c;
 }
 
-// ===== คำนวณราคาจำลอง =====
-function calcPrice(app, distanceKm) {
-    // เพิ่มความสุ่มเล็กน้อยเพื่อให้เหมือนจริง
-    const randomFactor = 0.9 + Math.random() * 0.2;
-    // จำลอง Surge Pricing ตามเวลา
-    const hour = new Date().getHours();
+// ===== คำนวณราคาด้วย Universal Fare Model (Deterministic 100%) =====
+function calcPrice(app, distanceKm, durationMin = null) {
+    const dur = durationMin || Math.max(3, Math.round(distanceKm * 2.5));
+    if (typeof FareModel !== 'undefined' && FareModel.estimateFare) {
+        const est = FareModel.estimateFare({
+            app: app.id,
+            vehicleType: 'car',
+            distanceKm,
+            durationMin: dur
+        });
+        return est.mid;
+    }
+    // Fallback deterministic formula if FareModel is not loaded
+    const hour = (typeof FareModel !== 'undefined' && FareModel.getBangkokHour)
+        ? FareModel.getBangkokHour()
+        : new Date().getHours();
     let surge = 1.0;
     if (hour >= 7 && hour <= 9) surge = 1.3;    // ชั่วโมงเร่งด่วนเช้า
     if (hour >= 17 && hour <= 19) surge = 1.4;   // ชั่วโมงเร่งด่วนเย็น
     if (hour >= 22 || hour <= 5) surge = 1.2;    // กลางคืน
 
-    const price = (app.basePrice + (app.perKm * distanceKm * 1.3)) * surge * randomFactor;
+    const price = (app.basePrice + (app.perKm * distanceKm * 1.3)) * surge;
     return Math.round(price);
 }
 
@@ -222,16 +232,28 @@ function searchRides() {
         // เพิ่มระยะทางถนนจริง (~1.3x ระยะตรง)
         const roadDistance = distance * 1.3;
 
-        // คำนวณราคาจากทุกแอป
+        // คำนวณราคาจากทุกแอป (Deterministic 100% - ปราศจาก Math.random)
+        const estDuration = Math.max(3, Math.round(roadDistance * 2.5));
         currentResults = RIDE_APPS.map(app => {
-            const price = calcPrice(app, roadDistance);
-            const waitTime = Math.floor(app.minWait + Math.random() * (app.maxWait - app.minWait));
-            const rating = (app.avgRating - 0.1 + Math.random() * 0.2).toFixed(1);
+            let price, waitTime;
+            if (typeof FareModel !== 'undefined' && FareModel.estimateFare) {
+                const est = FareModel.estimateFare({
+                    app: app.id,
+                    vehicleType: 'car',
+                    distanceKm: roadDistance,
+                    durationMin: estDuration
+                });
+                price = est.mid;
+                waitTime = est.waitTime;
+            } else {
+                price = calcPrice(app, roadDistance, estDuration);
+                waitTime = Math.round((app.minWait + app.maxWait) / 2);
+            }
             return {
                 ...app,
                 price,
                 waitTime,
-                rating: parseFloat(rating),
+                rating: app.avgRating,
                 distance: roadDistance.toFixed(1),
             };
         });

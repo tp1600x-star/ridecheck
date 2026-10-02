@@ -2653,6 +2653,9 @@
                 <i class="fas fa-coins" style="color:#F59E0B;"></i>
                 <span id="global-savings-display"><span class="hide-mobile">ช่วยคนไทยประหยัด </span><b>฿0</b></span>
             </div>
+            <button type="button" class="hq-nav-btn" onclick="openContributeModal()" title="ร่วมส่งข้อมูลราคาจริงเพื่อสอบเทียบโมเดล RideCheck" style="border: 1px solid rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.12); color: #10B981;">
+                <i class="fas fa-hand-holding-dollar"></i> <span class="hide-mobile">ส่งข้อมูลราคา</span>
+            </button>
             <button type="button" class="hq-nav-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="สลับโหมดสว่าง / โหมดมืด">
                 <i class="fas fa-moon" style="color:var(--primary);"></i> <span class="hide-mobile">ธีม</span>
             </button>
@@ -2967,6 +2970,9 @@
     <script src="ridecheck-db.js"></script>
     
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="fare-model.js"></script>
+    <script src="moto-router.js"></script>
+    <script src="surge-engine.js"></script>
     <script>
 
         // ===== THEME TOGGLE (LIGHT / DARK) =====
@@ -3059,6 +3065,9 @@
         let currentType = 'bike';
         let currentDistance = 0;
         let currentDurationMin = 15;
+        let currentMotoFeasible = 'yes';
+        let currentMotoWarning = '';
+        let currentMotoDetour = 0;
         let pickupAddressName = 'จุดที่ปักหมุดบนแผนที่';
         let dropoffAddressName = 'จุดที่ปักหมุดบนแผนที่';
 
@@ -3310,8 +3319,43 @@
             }
         }
 
-        // Fetch Real Road Route via OSRM (Open Source Routing Machine)
-        async function fetchRoadRoute(lat1, lon1, lat2, lon2) {
+        // Fetch Real Road Route (Auto-adapts to Motorcycle vs Car/Taxi)
+        async function fetchRoadRoute(lat1, lon1, lat2, lon2, vehicleType = currentType) {
+            // 1. Motorcycle Specialized Legal Routing Engine (Part A)
+            if (vehicleType === 'bike' && typeof MotoRouter !== 'undefined' && MotoRouter.getMotoRoute) {
+                try {
+                    const motoRes = await MotoRouter.getMotoRoute({ lat: lat1, lng: lon1 }, { lat: lat2, lng: lon2 });
+                    currentMotoFeasible = motoRes.moto_feasible;
+                    if (motoRes.moto_feasible === 'no') {
+                        currentMotoWarning = (motoRes.warnings && motoRes.warnings[0])
+                            ? motoRes.warnings[0]
+                            : 'ไม่มีเส้นทางที่รถจักรยานยนต์สามารถสัญจรได้ตามกฎหมาย แนะนำเลือกประเภทรถยนต์หรือแท็กซี่';
+                    } else if (motoRes.detour_ratio > 1.15) {
+                        const extraKm = Math.max(0, motoRes.distance_km - (motoRes.car_distance_km || motoRes.distance_km));
+                        currentMotoWarning = `เส้นทางมอเตอร์ไซค์เลี่ยงทางด่วน/สะพานห้าม (อ้อมกว่ารถยนต์ ${extraKm.toFixed(1)} กม.)`;
+                    } else {
+                        currentMotoWarning = '';
+                    }
+
+                    if (motoRes.distance_km) {
+                        return {
+                            distanceKm: motoRes.distance_km,
+                            durationMin: motoRes.duration_min,
+                            coordinates: (motoRes.coordinates && motoRes.coordinates.length > 0) ? motoRes.coordinates : [[lat1, lon1], [lat2, lon2]],
+                            isRealRoad: motoRes.confidence !== 'low',
+                            motoFeasible: motoRes.moto_feasible,
+                            motoDetails: motoRes
+                        };
+                    }
+                } catch (motoErr) {
+                    console.warn('MotoRouter failed, falling back to standard road router', motoErr);
+                }
+            } else {
+                currentMotoFeasible = 'yes';
+                currentMotoWarning = '';
+            }
+
+            // 2. Standard Car / Taxi Road Routing
             try {
                 const url = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`;
                 const controller = new AbortController();
@@ -3322,7 +3366,6 @@
                 if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
                     const route = data.routes[0];
                     const roadDistanceKm = route.distance / 1000;
-                    // Add buffer for traffic lights
                     const roadDurationMin = Math.max(5, Math.round(route.duration / 60) + 4);
                     const coordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
                     return {
@@ -3335,6 +3378,7 @@
             } catch (err) {
                 console.warn('OSRM routing fallback to winding factor', err);
             }
+
             // Fallback: Haversine * 1.40 (Intercity & urban winding factor)
             const straightDist = getDistance(lat1, lon1, lat2, lon2);
             const estRoadDist = straightDist * 1.40;
@@ -3638,10 +3682,11 @@
             const routeSavings = Math.max(0, routePrices[routePrices.length - 1].price - routePrices[0].price);
             syncWebDataToLiveStorage(routeData, routePrices[0].id, routeSavings);
 
-            // Draw real street route on map
+            // Draw real street route on map (Motorcycle in #10B981 emerald, Car in #8B5CF6 purple)
             if (routePolyline) map.removeLayer(routePolyline);
+            const routeColor = (currentType === 'bike') ? '#10B981' : '#8B5CF6';
             routePolyline = L.polyline(routeData.coordinates, {
-                color: '#8B5CF6',
+                color: routeColor,
                 weight: 6,
                 opacity: 0.9,
                 lineCap: 'round',
@@ -3664,252 +3709,12 @@
             }
         }
 
-        // Core Dual-Variable Pricing Formula (Accurate Thai Transport Regulations + Ride-Hailing Matrices)
+        // Core Dual-Variable Pricing Formula (Universal Fare Model - Thailand Nationwide)
         function estimateRideFare(distanceKm, durationMin, vehicleType, surgeMultiplier = 1.0) {
-            const dist = Math.max(0.1, distanceKm);
-            const dur = Math.max(1, durationMin);
-
-            const avgSpeed = dist / (dur / 60);
-            const isHeavyTraffic = avgSpeed < 18;
-            const isHighwaySpeed = avgSpeed > 45;
-
-            // 1. Official Thai Taxi Meter 2566 calculation (กฎกระทรวงคมนาคม พ.ศ. 2566)
-            function calcTaxiMeter(fee = 0) {
-                let fare = 40; // กม. แรก 40 บาท (แท็กซี่มาตรฐาน/ขนาดใหญ่ 2566)
-                let remDist = Math.max(0, dist - 1);
-
-                // Tier 1: กม. 1 ถึง 10 (9 กม.) @ 6.50 บาท/กม.
-                const t1 = Math.min(remDist, 9);
-                fare += t1 * 6.50;
-                remDist -= t1;
-
-                // Tier 2: กม. 10 ถึง 20 (10 กม.) @ 7.00 บาท/กม.
-                if (remDist > 0) {
-                    const t2 = Math.min(remDist, 10);
-                    fare += t2 * 7.00;
-                    remDist -= t2;
-                }
-
-                // Tier 3: กม. 20 ถึง 40 (20 กม.) @ 8.00 บาท/กม.
-                if (remDist > 0) {
-                    const t3 = Math.min(remDist, 20);
-                    fare += t3 * 8.00;
-                    remDist -= t3;
-                }
-
-                // Tier 4: กม. 40 ถึง 60 (20 กม.) @ 8.50 บาท/กม.
-                if (remDist > 0) {
-                    const t4 = Math.min(remDist, 20);
-                    fare += t4 * 8.50;
-                    remDist -= t4;
-                }
-
-                // Tier 5: กม. 60 ถึง 80 (20 กม.) @ 9.00 บาท/กม.
-                if (remDist > 0) {
-                    const t5 = Math.min(remDist, 20);
-                    fare += t5 * 9.00;
-                    remDist -= t5;
-                }
-
-                // Tier 6: เกิน 80 กม. ขึ้นไป @ 10.50 บาท/กม.
-                if (remDist > 0) {
-                    fare += remDist * 10.50;
-                }
-
-                // Traffic Idle / Slow moving (<6 km/h) fee: ฿3.00/min
-                const jamPercent = isHeavyTraffic ? 0.55 : (isHighwaySpeed ? 0.15 : 0.35);
-                const jamMinutes = dur * jamPercent;
-                const timeCost = jamMinutes * 3.00;
-                fare += timeCost;
-
-                const baseFareVal = 40;
-                const distFareVal = Math.round(fare - baseFareVal - timeCost);
-                const durFareVal = Math.round(timeCost);
-                const totalMeter = Math.round(fare);
-                const finalPrice = totalMeter + fee;
-
-                return {
-                    baseFareVal,
-                    distFareVal,
-                    durFareVal,
-                    bookingFeeVal: fee,
-                    rawPrice: finalPrice,
-                    finalPrice: finalPrice,
-                    minRange: Math.round(finalPrice * 0.93),
-                    maxRange: Math.round(finalPrice * 1.10)
-                };
+            if (typeof FareModel !== 'undefined' && FareModel.estimateRideFare) {
+                return FareModel.estimateRideFare(distanceKm, durationMin, vehicleType, surgeMultiplier);
             }
-
-            // 2. Pricing Matrix for Ride-Hailing Apps
-            const pricingMatrix = {
-                bike: {
-                    bolt: { base: 25, minFare: 25, perKm: 6.0, perKm10: 6.2, perMin: 0.70, service: 'Bolt Motorbike', feature: 'ราคาประหยัด เรียกรวดเร็ว', hasPromo: true, promoDiscount: 0.25 },
-                    grab: { base: 30, minFare: 30, perKm: 6.5, perKm10: 6.8, perMin: 0.75, service: 'GrabBike (Standard & Saver)', feature: 'มาตรฐาน Grab ยอดนิยม', hasSaver: true },
-                    lineman: { base: 25, minFare: 25, perKm: 5.8, perKm10: 6.0, perMin: 0.70, service: 'LINE MAN Bike', feature: 'คนขับมืออาชีพ มารับถึงที่' },
-                    maxim: { base: 18, minFare: 20, perKm: 4.2, perKm10: 4.5, perMin: 0.45, service: 'Maxim Moto', feature: 'ค่าโดยสารเริ่มต้นเบาใจที่สุด' },
-                    indrive: { base: 20, minFare: 20, perKm: 4.5, perKm10: 4.8, perMin: 0.50, service: 'inDrive Moto', feature: 'เสนอราคาต่อรองได้อิสระ' }
-                },
-                car: {
-                    bolt: { base: 36, minFare: 40, perKm: 7.2, perKm10: 7.8, perKm30: 8.5, perMin: 1.05, service: 'Bolt Economy (Wait & Save)', feature: 'ประหยัดคุ้มค่า รอไม่นาน', hasPromo: true, promoDiscount: 0.20 },
-                    grab: { base: 45, minFare: 48, perKm: 9.2, perKm10: 10.5, perKm30: 11.5, perMin: 1.35, service: 'JustGrab / GrabCar', feature: 'รถยนต์เก๋งมาตรฐาน รถเยอะสุด', hasSaver: true },
-                    lineman: { base: 40, minFare: 44, perKm: 7.6, perKm10: 8.2, perKm30: 9.0, perMin: 1.20, service: 'LINE MAN Eco', feature: 'รถยนต์ส่วนบุคคลสภาพดี' },
-                    maxim: { base: 30, minFare: 35, perKm: 5.8, perKm10: 6.2, perKm30: 7.0, perMin: 0.80, service: 'Maxim Economy', feature: 'ค่าโดยสารประหยัด คล่องตัว' },
-                    indrive: { base: 35, minFare: 38, perKm: 6.6, perKm10: 7.0, perKm30: 7.8, perMin: 0.90, service: 'inDrive City', feature: 'ผู้โดยสารกำหนดราคาเอง' }
-                },
-                taxi: {
-                    bolt: { isTaxiMeter: true, bookingFee: 0, service: 'Bolt Taxi', feature: 'มิเตอร์แท็กซี่ ไม่มีค่าเรียกเพิ่ม' },
-                    lineman: { isTaxiMeter: true, bookingFee: 20, service: 'LINE MAN Taxi', feature: 'แท็กซี่มิเตอร์ถูกต้องตาม พ.ร.บ. + ค่าเรียก ฿20' },
-                    grab: { isTaxiMeter: true, bookingFee: 20, service: 'GrabTaxi', feature: 'แท็กซี่มิเตอร์ พร้อมระบบติดตาม + ฿20' },
-                    maxim: { isTaxiMeter: true, bookingFee: 10, service: 'Maxim Taxi', feature: 'แท็กซี่มิเตอร์ ค่าบริการ ฿10' },
-                    indrive: { isTaxiMeter: true, bookingFee: 0, service: 'inDrive Taxi', feature: 'แท็กซี่มิเตอร์ตรงไปตรงมา' }
-                },
-                suv: {
-                    bolt: { base: 55, minFare: 65, perKm: 11.0, perKm10: 12.0, perKm30: 13.0, perMin: 1.50, service: 'Bolt XL', feature: 'เดินทางเป็นกลุ่มประหยัดกว่า' },
-                    grab: { base: 70, minFare: 80, perKm: 13.5, perKm10: 15.0, perKm30: 16.5, perMin: 2.00, service: 'GrabCar Plus (6 ที่นั่ง)', feature: 'SUV คันใหญ่ นั่งสบาย 6-7 ที่นั่ง' },
-                    lineman: { base: 60, minFare: 70, perKm: 12.0, perKm10: 13.0, perKm30: 14.5, perMin: 1.80, service: 'LINE MAN Large', feature: 'จุสัมภาระได้มาก' },
-                    maxim: { base: 48, minFare: 55, perKm: 9.5, perKm10: 10.5, perKm30: 11.5, perMin: 1.30, service: 'Maxim 6-Seater', feature: 'รถขนาดครอบครัวราคาย่อมเยา' },
-                    indrive: { base: 52, minFare: 60, perKm: 10.5, perKm10: 11.5, perKm30: 12.5, perMin: 1.40, service: 'inDrive XL', feature: 'ต่อรองราคารถใหญ่' }
-                },
-                van: {
-                    bolt: { base: 120, minFare: 130, perKm: 16.0, perKm10: 17.5, perKm30: 19.0, perMin: 2.50, service: 'Bolt Van', feature: 'รถตู้โดยสาร 10 ที่นั่ง' },
-                    grab: { base: 150, minFare: 160, perKm: 18.0, perKm10: 20.0, perKm30: 22.0, perMin: 3.00, service: 'GrabVan', feature: 'รถตู้ VIP ขนาดใหญ่ นั่งได้ถึง 10 คน' },
-                    lineman: { base: 130, minFare: 140, perKm: 17.0, perKm10: 18.5, perKm30: 20.5, perMin: 2.80, service: 'LINE MAN Van', feature: 'เหมาะสำหรับทริปสัมมนาหรือครอบครัว' },
-                    maxim: { base: 110, minFare: 120, perKm: 14.0, perKm10: 15.5, perKm30: 17.0, perMin: 2.00, service: 'Maxim Minivan', feature: 'รถตู้ราคาย่อมเยา' },
-                    indrive: { base: 115, minFare: 125, perKm: 15.0, perKm10: 16.5, perKm30: 18.0, perMin: 2.20, service: 'inDrive Van', feature: 'ตกลงราคาเหมาจ่ายได้' }
-                },
-                premium: {
-                    bolt: { base: 90, minFare: 100, perKm: 16.0, perKm10: 17.5, perKm30: 19.0, perMin: 2.50, service: 'Bolt Premium', feature: 'รถยนต์ระดับพรีเมียม ประหยัดคุ้ม' },
-                    grab: { base: 120, minFare: 140, perKm: 20.0, perKm10: 22.0, perKm30: 24.0, perMin: 3.00, service: 'GrabExec / Premium', feature: 'รถซีดานหรูระดับผู้บริหาร พนักงานบริการยอดเยี่ยม' },
-                    lineman: { base: 100, minFare: 120, perKm: 18.0, perKm10: 19.5, perKm30: 21.5, perMin: 2.80, service: 'LINE MAN Black', feature: 'รถยนต์ชั้นเลิศ บริการ VIP' },
-                    maxim: { base: 80, minFare: 90, perKm: 14.0, perKm10: 15.0, perKm30: 16.5, perMin: 2.00, service: 'Maxim Comfort', feature: 'รถใหม่นั่งสบาย' },
-                    indrive: { base: 85, minFare: 95, perKm: 15.0, perKm10: 16.0, perKm30: 17.5, perMin: 2.20, service: 'inDrive Comfort', feature: 'รถนั่งสบาย เสนอราคาได้' }
-                }
-            };
-
-            const typeConfig = pricingMatrix[vehicleType] || pricingMatrix.car;
-
-            return apps.map(app => {
-                const cfg = typeConfig[app.id] || { base: 40, minFare: 40, perKm: 8, perMin: 1.2 };
-
-                // App Regional Availability & Coverage Metadata (Nationwide 77 Provinces)
-                const appRegionalCoverage = {
-                    grab: { tag: 'ครอบคลุม 77 จังหวัด', cls: 'badge-coverage-nationwide', note: 'มีรถพร้อมรับทั่วไทย ทั้งเมืองหลักและต่างจังหวัด' },
-                    bolt: { tag: 'เมืองหลัก & ท่องเที่ยว', cls: 'badge-coverage-metro', note: 'กทม., เชียงใหม่, ภูเก็ต, พัทยา, ชลบุรี, หัวหิน' },
-                    lineman: { tag: 'กทม. และปริมณฑล', cls: 'badge-coverage-metro', note: 'เน้นเขตกรุงเทพฯ, นนทบุรี, สมุทรปราการ, ปทุมธานี' },
-                    maxim: { tag: 'ทั่วประเทศ & เมืองรอง', cls: 'badge-coverage-regional', note: 'ครอบคลุมจังหวัดภูมิภาคและเมืองรองทั่วไทย' },
-                    indrive: { tag: 'เสนอราคาต่อรองได้', cls: 'badge-coverage-regional', note: 'ตกลงราคากับคนขับได้อิสระ เดินทางข้ามจังหวัดได้' }
-                };
-
-                const cov = appRegionalCoverage[app.id] || { tag: 'พร้อมให้บริการ', cls: 'badge-coverage-metro', note: 'ตรวจสอบในแอป' };
-
-                // Handle Taxi Meter
-                if (vehicleType === 'taxi' || cfg.isTaxiMeter) {
-                    const taxiCalc = calcTaxiMeter(cfg.bookingFee || 0);
-                    return {
-                        ...app,
-                        serviceName: cfg.service || 'แท็กซี่มิเตอร์',
-                        feature: cfg.feature || 'แท็กซี่มิเตอร์ตามกฎหมาย',
-                        price: taxiCalc.finalPrice,
-                        regularPrice: taxiCalc.finalPrice,
-                        minRange: taxiCalc.minRange,
-                        maxRange: taxiCalc.maxRange,
-                        subPriceNote: cfg.bookingFee ? `มิเตอร์ ~฿${taxiCalc.rawPrice - cfg.bookingFee} + ค่าเรียก ฿${cfg.bookingFee}` : `มิเตอร์ พ.ร.บ. คมนาคม 2566`,
-                        promoDiscountTag: '',
-                        waitTime: Math.floor(Math.random() * 3) + 3,
-                        baseFareVal: taxiCalc.baseFareVal,
-                        distFareVal: taxiCalc.distFareVal,
-                        durFareVal: taxiCalc.durFareVal,
-                        bookingFeeVal: taxiCalc.bookingFeeVal,
-                        surgeVal: 1.0,
-                        discountVal: 0,
-                        coverageTag: cov.tag,
-                        coverageClass: cov.cls,
-                        coverageNote: cov.note
-                    };
-                }
-
-                // App-based calculation with Progressive Distance Tiers (Long-Distance Intercity Discount)
-                let distCost = 0;
-                const pKm = cfg.perKm;
-                const pKm10 = cfg.perKm10 || pKm * 1.05;
-                const pKm30 = cfg.perKm30 || pKm * 1.10;
-
-                if (dist <= 10) {
-                    distCost = dist * pKm;
-                } else if (dist <= 30) {
-                    distCost = (10 * pKm) + ((dist - 10) * pKm10);
-                } else if (dist <= 60) {
-                    // Long-distance Tier 1 (> 30 km): 15% discount on marginal rate (Intercity travel)
-                    const marginalRate30 = pKm30 * 0.85;
-                    distCost = (10 * pKm) + (20 * pKm10) + ((dist - 30) * marginalRate30);
-                } else {
-                    // Long-distance Tier 2 (> 60 km): 30% discount on marginal rate (Long distance / Highway cruise)
-                    const marginalRate30 = pKm30 * 0.85;
-                    const marginalRate60 = pKm30 * 0.70;
-                    distCost = (10 * pKm) + (20 * pKm10) + (30 * marginalRate30) + ((dist - 60) * marginalRate60);
-                }
-
-                // Traffic duration cost: Long-distance trips (>30 km) cruise on highways without heavy city-traffic idling
-                let speedFactor = isHeavyTraffic ? 1.2 : (isHighwaySpeed ? 0.75 : 1.0);
-                if (dist > 30) {
-                    speedFactor *= 0.70; // Highway cruising factor
-                }
-                const timeCost = dur * cfg.perMin * speedFactor;
-
-                const rawFare = cfg.base + distCost + timeCost + (cfg.bookingFee || 0);
-                const regularPrice = Math.max(cfg.minFare || cfg.base, Math.round(rawFare * surgeMultiplier));
-
-                let displayPrice = regularPrice;
-                let subPriceNote = '';
-                let promoDiscountTag = '';
-
-                if (cfg.hasPromo && cfg.promoDiscount) {
-                    displayPrice = Math.max(cfg.minFare || cfg.base, Math.round(regularPrice * (1 - cfg.promoDiscount)));
-                    subPriceNote = `ใช้โค้ดลด ${Math.round(cfg.promoDiscount * 100)}% (ปกติ ฿${regularPrice})`;
-                    promoDiscountTag = `-${Math.round(cfg.promoDiscount * 100)}% โค้ด`;
-                } else if (cfg.hasSaver) {
-                    const saverPrice = Math.max(cfg.minFare || cfg.base, Math.round(regularPrice * 0.82));
-                    displayPrice = saverPrice;
-                    subPriceNote = `โหมด Saver ฿${saverPrice} | มาตรฐาน ฿${regularPrice}`;
-                } else if (dist > 30) {
-                    subPriceNote = `อัตราเดินทางไกลข้ามจังหวัด (ประหยัดตามระยะทาง)`;
-                } else if (cfg.bookingFee) {
-                    subPriceNote = `รวมค่าบริการเรียก ฿${cfg.bookingFee}`;
-                } else {
-                    subPriceNote = `อัตราประเมินตามระยะทาง + สภาพจราจร`;
-                }
-
-                const minRange = Math.max(cfg.minFare || cfg.base, Math.round(displayPrice * 0.94));
-                const maxRange = Math.round(displayPrice * 1.08);
-
-                const waitTime = Math.floor(Math.random() * 4) + 3;
-                const baseFareVal = cfg.base;
-                const distFareVal = Math.round(distCost);
-                const durFareVal = Math.round(timeCost);
-                const discountVal = Math.max(0, regularPrice - displayPrice);
-
-                return {
-                    ...app,
-                    serviceName: cfg.service || app.serviceName,
-                    feature: cfg.feature || app.feature,
-                    price: displayPrice,
-                    regularPrice,
-                    minRange,
-                    maxRange,
-                    subPriceNote,
-                    promoDiscountTag,
-                    waitTime,
-                    baseFareVal,
-                    distFareVal,
-                    durFareVal,
-                    bookingFeeVal: cfg.bookingFee || 0,
-                    surgeVal: surgeMultiplier,
-                    discountVal,
-                    coverageTag: cov.tag,
-                    coverageClass: cov.cls,
-                    coverageNote: cov.note
-                };
-            });
+            return (window.FareModel ? window.FareModel.estimateRideFare : () => [])(distanceKm, durationMin, vehicleType, surgeMultiplier);
         }
 
         function renderCards() {
@@ -3922,6 +3727,28 @@
             existingBanners.forEach(b => b.remove());
             const existingTrans = listContainer.querySelectorAll('.transparency-engine-card');
             existingTrans.forEach(t => t.remove());
+
+            // Check for motorcycle legality & restrictions (Part A)
+            if (currentType === 'bike' && currentMotoFeasible === 'no') {
+                const infeasibleCard = document.createElement('div');
+                infeasibleCard.className = 'moto-infeasible-banner';
+                infeasibleCard.style.cssText = 'background:#FEF2F2; border:1.5px solid #F87171; border-radius:12px; padding:16px; margin-bottom:14px; color:#991B1B;';
+                infeasibleCard.innerHTML = `
+                    <div style="font-weight:700; font-size:14px; margin-bottom:6px;"><i class="fas fa-triangle-exclamation"></i> ไม่มีเส้นทางที่รถจักรยานยนต์สัญจรได้ตามกฎหมาย</div>
+                    <div style="font-size:12.5px; color:#7F1D1D; line-height:1.5;">${currentMotoWarning || 'เส้นทางนี้ต้องใช้ทางพิเศษยกระดับหรือทางหลวงพิเศษที่ห้ามรถจักรยานยนต์เข้าใช้ แนะนำเลือกประเภทรถยนต์หรือแท็กซี่'}</div>
+                `;
+                listContainer.appendChild(infeasibleCard);
+                return;
+            }
+
+            // Motorcycle Detour Notification Banner
+            if (currentType === 'bike' && currentMotoWarning && currentMotoFeasible === 'yes') {
+                const detourBanner = document.createElement('div');
+                detourBanner.className = 'moto-detour-banner';
+                detourBanner.style.cssText = 'background:#F0FDF4; border:1px solid #86EFAC; border-radius:10px; padding:10px 14px; margin-bottom:12px; font-size:12px; color:#166534; display:flex; align-items:center; gap:8px;';
+                detourBanner.innerHTML = `<i class="fas fa-motorcycle" style="font-size:16px; color:#15803D;"></i> <div><b>เส้นทางมอเตอร์ไซค์ถูกกฎหมาย:</b> ${currentMotoWarning}</div>`;
+                listContainer.appendChild(detourBanner);
+            }
 
             // Run estimation formula
             let appResults = estimateRideFare(currentDistance, currentDurationMin, currentType, activeSurgeMultiplier);
@@ -4423,8 +4250,35 @@
             }
         }
 
-        // Automatic Rush-Hour check (07:30-09:30 or 17:00-20:00 Bangkok Time)
-        function checkBangkokRushHour() {
+        // Dynamic Surge & Rush-Hour Check via SurgeEngine (Specification A6)
+        async function checkBangkokRushHour() {
+            let lat = pickupLatLng ? pickupLatLng.lat : 13.7563;
+            let lng = pickupLatLng ? pickupLatLng.lng : 100.5018;
+
+            if (typeof SurgeEngine !== 'undefined' && typeof SurgeEngine.getSurgeMultiplier === 'function') {
+                try {
+                    const surgeInfo = await SurgeEngine.getSurgeMultiplier(lat, lng);
+                    const mult = surgeInfo.overallMultiplier;
+                    const alertEl = document.getElementById('rush-hour-alert');
+                    if (mult > 1.05) {
+                        if (alertEl) {
+                            alertEl.style.display = 'flex';
+                            alertEl.innerHTML = `<i class="fas fa-bolt"></i> <div><b>สภาวะความต้องการสูง (${mult.toFixed(2)}x):</b> ${surgeInfo.reasons.join(' • ')}</div>`;
+                        }
+                        const color = mult >= 1.35 ? '#EF4444' : '#F59E0B';
+                        const label = `⚡ Surge ${mult.toFixed(2)}x`;
+                        setSurgeMultiplier(mult, label, color);
+                    } else {
+                        if (alertEl) alertEl.style.display = 'none';
+                        setSurgeMultiplier(1.0, '⚡ ปกติ (1.0x)', '#10B981');
+                    }
+                    return;
+                } catch (e) {
+                    console.warn('SurgeEngine live fetch fallback:', e);
+                }
+            }
+
+            // Fallback to time math if SurgeEngine unavailable
             const now = new Date();
             const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
             const bkkTime = new Date(utc + (3600000 * 7));
@@ -4441,6 +4295,7 @@
                 setSurgeMultiplier(1.35, '⚠️ เร่งด่วน (1.35x)', '#F59E0B');
             } else {
                 if (alertEl) alertEl.style.display = 'none';
+                setSurgeMultiplier(1.0, '⚡ ปกติ (1.0x)', '#10B981');
             }
         }
 
@@ -5195,6 +5050,9 @@
 
         // Bootstrap on load
         window.onload = () => {
+            // Initialize calibrated pricing model and dynamic surge
+            initCalibrationAndSurge();
+
             // Initialize real user savings display (No fake 14 million stats)
             updateUserSavingsDisplay();
 
@@ -5429,6 +5287,129 @@
         function closeSavingsModal() {
             const modal = document.getElementById('user-savings-modal');
             if (modal) modal.classList.remove('active');
+        }
+
+        // ===== COMMUNITY DATA CONTRIBUTION (CROWDSOURCE CALIBRATION) =====
+        function openContributeModal() {
+            const modal = document.getElementById('contribute-fare-modal');
+            if (!modal) return;
+
+            // Pre-fill form if current route is available
+            const originInput = document.getElementById('cf-origin');
+            const destInput = document.getElementById('cf-dest');
+            const distInput = document.getElementById('cf-distance');
+            const durInput = document.getElementById('cf-duration');
+            const tierSelect = document.getElementById('cf-tier');
+
+            if (originInput && pickupAddressName) originInput.value = pickupAddressName;
+            if (destInput && dropoffAddressName) destInput.value = dropoffAddressName;
+            if (distInput && currentDistance > 0) distInput.value = currentDistance;
+            if (durInput && currentDurationMin > 0) durInput.value = currentDurationMin;
+            if (tierSelect && currentType) tierSelect.value = currentType;
+
+            modal.classList.add('active');
+        }
+
+        function closeContributeModal() {
+            const modal = document.getElementById('contribute-fare-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function submitFareContribution(event) {
+            event.preventDefault();
+            const record = {
+                id: 'contrib_' + Date.now(),
+                timestamp: new Date().toISOString(),
+                app: document.getElementById('cf-app')?.value || 'grab',
+                service_tier: document.getElementById('cf-tier')?.value || 'car',
+                origin_name: document.getElementById('cf-origin')?.value || '',
+                dest_name: document.getElementById('cf-dest')?.value || '',
+                road_distance_km: parseFloat(document.getElementById('cf-distance')?.value) || 0,
+                duration_min: parseFloat(document.getElementById('cf-duration')?.value) || 0,
+                actual_price: parseFloat(document.getElementById('cf-price')?.value) || 0,
+                weather: document.getElementById('cf-weather')?.value || 'clear',
+                traffic_level: document.getElementById('cf-traffic')?.value || 'moderate'
+            };
+
+            // Save to localStorage
+            try {
+                const stored = JSON.parse(localStorage.getItem('ridecheck_contributed_fares') || '[]');
+                stored.push(record);
+                localStorage.setItem('ridecheck_contributed_fares', JSON.stringify(stored));
+            } catch (err) {}
+
+            // Send to Firestore if available
+            if (typeof RideCheckDB !== 'undefined' && RideCheckDB.db) {
+                try {
+                    RideCheckDB.db.collection('fare_contributions').add(record);
+                } catch (e) {}
+            }
+
+            closeContributeModal();
+            showHQToast('🎉 ขอบคุณที่ร่วมส่งข้อมูลราคาจริง! ข้อมูลของคุณจะช่วยสอบเทียบโมเดล RideCheck ให้คนไทยทุกคน', 'Community Contributor');
+        }
+
+        function exportContributionsCSV() {
+            try {
+                const stored = JSON.parse(localStorage.getItem('ridecheck_contributed_fares') || '[]');
+                if (!stored || stored.length === 0) {
+                    alert('ยังไม่มีข้อมูลที่คุณเคยบันทึกไว้ในเครื่องนี้ (ส่งข้อมูลราคาก่อนกด Export)');
+                    return;
+                }
+                const headers = ['timestamp', 'app', 'service_tier', 'origin_name', 'dest_name', 'road_distance_km', 'duration_min', 'actual_price', 'weather', 'traffic_level'];
+                const rows = [headers.join(',')];
+                stored.forEach(r => {
+                    rows.push([
+                        r.timestamp,
+                        r.app,
+                        r.service_tier,
+                        `"${r.origin_name}"`,
+                        `"${r.dest_name}"`,
+                        r.road_distance_km,
+                        r.duration_min,
+                        r.actual_price,
+                        r.weather,
+                        r.traffic_level
+                    ].join(','));
+                });
+                const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `ridecheck_contributions_${Date.now()}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                alert('เกิดข้อผิดพลาดในการ Export CSV: ' + e.message);
+            }
+        }
+
+        // ===== INITIALIZE CALIBRATION & LIVE SURGE =====
+        const EMBEDDED_CALIBRATION_PARAMS = {
+            title: "RideCheck Calibrated Fare Parameters",
+            calibratedAt: "2026-10-02T20:06:58.297Z",
+            modelVersion: "1.1.0-calibrated",
+            totalSampleCount: 36,
+            parameters: {
+                "grab_bike": { "baseFare": 20, "perKm": 7.45, "perMin": 0.68, "minFare": 30 },
+                "bolt_bike": { "baseFare": 18, "perKm": 5.01, "perMin": 0.94, "minFare": 25 },
+                "lineman_bike": { "baseFare": 21, "perKm": 5.70, "perMin": 1.06, "minFare": 28 },
+                "maxim_bike": { "baseFare": 16, "perKm": 4.56, "perMin": 0.55, "minFare": 25 },
+                "indrive_bike": { "baseFare": 20, "perKm": 5.16, "perMin": 0.49, "minFare": 28 },
+                "grab_car": { "baseFare": 35, "perKm": 16.36, "perMin": 0.97, "minFare": 50 },
+                "bolt_car": { "baseFare": 30, "perKm": 13.21, "perMin": 0.71, "minFare": 45 },
+                "lineman_car": { "baseFare": 42, "perKm": 11.00, "perMin": 2.00, "minFare": 50 },
+                "maxim_car": { "baseFare": 32, "perKm": 10.72, "perMin": 0.54, "minFare": 40 },
+                "indrive_car": { "baseFare": 37, "perKm": 11.49, "perMin": 0.57, "minFare": 45 }
+            }
+        };
+
+        function initCalibrationAndSurge() {
+            if (typeof FareModel !== 'undefined' && typeof FareModel.applyCalibration === 'function') {
+                FareModel.applyCalibration(EMBEDDED_CALIBRATION_PARAMS);
+                console.log('✨ [RideCheck] FareModel Calibrated v1.1.0 (36 samples, MAPE 12.17%)');
+            }
+            checkBangkokRushHour();
         }
 
         function updateLiveSavingsCounter(newTotal = null) {
@@ -5847,6 +5828,107 @@ app.listen(3000);</div>
             <div class="lat-msg" id="live-activity-msg">มีผู้ใช้เพิ่งประหยัดไป ฿38 (สยาม ➔ สุวรรณภูมิ)</div>
         </div>
         <button type="button" class="lat-close-btn" onclick="dismissLiveActivityToast(event)" title="ปิด"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- Modal 5: Community Data Contribution Modal (Crowdsourced Empirical Calibration) -->
+    <div id="contribute-fare-modal" class="modal-overlay" onclick="closeContributeModal()">
+        <div class="modal-card" style="max-width: 520px;" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <div class="app-logo-badge" style="background:#10B981; color:#fff;">
+                        <i class="fas fa-hand-holding-dollar" style="font-size:16px;"></i>
+                    </div>
+                    <div>
+                        <h3 style="font-size:16px; font-weight:800; color:var(--text-heading);">ร่วมส่งข้อมูลราคาจริง (Crowdsource Data)</h3>
+                        <span style="font-size:12px; color:var(--text-muted);">ช่วยสอบเทียบโมเดลราคา RideCheck ให้แม่นยำที่สุดสำหรับคนไทยทั่วประเทศ</span>
+                    </div>
+                </div>
+                <button class="modal-close-btn" onclick="closeContributeModal()" title="ปิด"><i class="fas fa-xmark"></i></button>
+            </div>
+            <form id="contribute-fare-form" onsubmit="submitFareContribution(event)" style="padding: 20px;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                        <label style="font-size:12px; font-weight:700; color:var(--text-heading); display:block; margin-bottom:4px;">ค่ายเรียกรถ *</label>
+                        <select id="cf-app" required style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-subtle); background:var(--bg-base); color:var(--text-heading); font-size:13px;">
+                            <option value="grab">Grab</option>
+                            <option value="bolt">Bolt</option>
+                            <option value="lineman">LINE MAN</option>
+                            <option value="maxim">Maxim</option>
+                            <option value="indrive">inDrive</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px; font-weight:700; color:var(--text-heading); display:block; margin-bottom:4px;">ประเภทยานพาหนะ *</label>
+                        <select id="cf-tier" required style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-subtle); background:var(--bg-base); color:var(--text-heading); font-size:13px;">
+                            <option value="bike">มอเตอร์ไซค์ (Bike)</option>
+                            <option value="car">รถยนต์เก๋ง (Car)</option>
+                            <option value="taxi">แท็กซี่มิเตอร์ (Taxi)</option>
+                            <option value="suv">รถใหญ่ 6-7 ที่นั่ง (SUV/XL)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:12px; font-weight:700; color:var(--text-heading); display:block; margin-bottom:4px;">จุดรับ (ต้นทาง) *</label>
+                    <input type="text" id="cf-origin" required placeholder="เช่น BTS สยาม หรือ สี่แยกบางนา" style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-subtle); background:var(--bg-base); color:var(--text-heading); font-size:13px;">
+                </div>
+
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:12px; font-weight:700; color:var(--text-heading); display:block; margin-bottom:4px;">จุดส่ง (ปลายทาง) *</label>
+                    <input type="text" id="cf-dest" required placeholder="เช่น สนามบินสุวรรณภูมิ หรือ เซ็นทรัลพระราม 2" style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-subtle); background:var(--bg-base); color:var(--text-heading); font-size:13px;">
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:12px;">
+                    <div>
+                        <label style="font-size:12px; font-weight:700; color:var(--text-heading); display:block; margin-bottom:4px;">ระยะทาง (กม.)</label>
+                        <input type="number" id="cf-distance" step="0.1" placeholder="เช่น 5.4" style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-subtle); background:var(--bg-base); color:var(--text-heading); font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:12px; font-weight:700; color:var(--text-heading); display:block; margin-bottom:4px;">เวลา (นาที)</label>
+                        <input type="number" id="cf-duration" placeholder="เช่น 15" style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-subtle); background:var(--bg-base); color:var(--text-heading); font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:12px; font-weight:700; color:#059669; display:block; margin-bottom:4px;">ราคาจริงบนแอป (฿) *</label>
+                        <input type="number" id="cf-price" required placeholder="เช่น 59" style="width:100%; padding:9px 12px; border-radius:8px; border:1.5px solid #10B981; background:var(--bg-base); color:var(--text-heading); font-size:13px; font-weight:700;">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:16px;">
+                    <div>
+                        <label style="font-size:12px; font-weight:700; color:var(--text-heading); display:block; margin-bottom:4px;">สภาพอากาศ</label>
+                        <select id="cf-weather" style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-subtle); background:var(--bg-base); color:var(--text-heading); font-size:13px;">
+                            <option value="clear">☀️ ท้องฟ้าแจ่มใส / ปกติ</option>
+                            <option value="rain_light">🌦️ ฝนตกเล็กน้อย</option>
+                            <option value="rain_heavy">⛈️ ฝนตกหนัก / พายุ</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px; font-weight:700; color:var(--text-heading); display:block; margin-bottom:4px;">การจราจร</label>
+                        <select id="cf-traffic" style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--border-subtle); background:var(--bg-base); color:var(--text-heading); font-size:13px;">
+                            <option value="moderate">🚗 รถไหลตามกันเรื่อยๆ</option>
+                            <option value="high">🚦 รถติดหนาแน่น</option>
+                            <option value="low">🛣️ ถนนโล่งคล่องตัว</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="background:var(--bg-subtle); border-radius:8px; padding:10px; font-size:11px; color:var(--text-muted); line-height:1.4; margin-bottom:16px;">
+                    🔒 <b>คุ้มครองความเป็นส่วนตัว:</b> ข้อมูลที่ส่งจะนำไปใช้สำหรับคำนวณ Linear Regression สอบเทียบค่าพารามิเตอร์ต่อระยะทางเท่านั้น ไม่มีการเก็บข้อมูลส่วนบุคคลของผู้ใช้
+                </div>
+
+                <div style="display:flex; justify-content:space-between; gap:10px;">
+                    <button type="button" onclick="exportContributionsCSV()" class="hq-nav-btn" style="padding:10px 14px; font-size:12px;">
+                        <i class="fas fa-file-csv"></i> Export CSV
+                    </button>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" onclick="closeContributeModal()" class="hq-nav-btn" style="padding:10px 16px; font-size:12px;">ยกเลิก</button>
+                        <button type="submit" class="btn-search-action" style="padding:10px 20px; font-size:12px; background:linear-gradient(135deg, #10B981, #059669); border:none; color:white; border-radius:8px; cursor:pointer;">
+                            <i class="fas fa-paper-plane"></i> ส่งข้อมูลราคา
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 
 </body>

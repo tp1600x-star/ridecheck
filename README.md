@@ -1,151 +1,150 @@
 # 🚖 RideCheck Thailand — Open Source Smart Ride Price Comparison Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Tests: Passing](https://img.shields.io/badge/tests-26%2F26%20passed-brightgreen.svg)](test-runner.js)
-[![Platform: Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-green.svg)](https://nodejs.org/)
-[![Database: Firebase Firestore](https://img.shields.io/badge/Database-Firebase%20Firestore-orange.svg)](https://firebase.google.com/)
+[![Tests: 121/121 Passed](https://img.shields.io/badge/QA%20Tests-121%2F121%20Passed%20(100%25)-brightgreen.svg)](test-runner.js)
+[![Model Version](https://img.shields.io/badge/Model%20Version-v1.1.0--calibrated-purple.svg)](data/calibrated-parameters.json)
+[![Accuracy: MAPE 12.2%](https://img.shields.io/badge/Accuracy-MAPE%2012.2%25%20%7C%20MAE%20%E0%B8%BF11.97-blueviolet.svg)](data/calibrated-parameters.json)
+[![Router](https://img.shields.io/badge/Motorcycle%20Router-Legal%20%26%20Detour%20Aware-emerald.svg)](docs/routing.md)
+[![Platform: Node.js](https://img.shields.io/badge/Node.js-%3E%3D20-green.svg)](https://nodejs.org/)
 
-**RideCheck Thailand** เป็นแพลตฟอร์มเปรียบเทียบราคาเรียกรถโดยสารออนไลน์แบบเรียลไทม์ (Ride-Hailing Comparison Engine) ตัวแรกที่สร้างขึ้นเพื่อผู้บริโภคชาวไทย รวบรวมและเปรียบเทียบค่าโดยสารระหว่าง **Grab, Bolt, LINE MAN, inDrive, Maxim** พร้อมระบบจำลองอาคารออฟฟิศ 3D AI Autonomous Workforce และระบบผู้ช่วยส่วนตัวผ่าน Telegram Bot
-
----
-
-## 🌟 ฟีเจอร์เด่น (Key Features)
-
-1. **⚡ Real-Time Price Comparison Engine (`index.html` / `v2.html`)**
-   - แผนที่คู่ขนาน **Longdo Map HD** (เจาะลึกตรอกซอกซอยไทย 77 จังหวัด) + **Google Maps Ultra HD** (Street, Satellite Hybrid, Terrain)
-   - ระบบค้นหาอัจฉริยะ **Multi-Provider Geocoding** (Longdo Map Search & Address API, Landmarks DB 0ms, Photon, Nominatim, Google Places)
-   - คำนวณเส้นทางและระยะทางด้วย Leaflet, OSRM และรองรับระบบนำทางชั้นนำ
-   - เปรียบเทียบราคารถทุกประเภท (Eco / Compact, Sedan, Premium, Bike, SUV, XL)
-   - Dynamic Surge Pricing & Weather Impact คำนวณผลกระทบของฝนตกและช่วงเวลาเร่งด่วนตามพิกัดจริง
-   - Zero Data Loss: เก็บสถิติยอดประหยัดสะสมลง Firestore หรือ fallback เป็น localStorage ออฟไลน์
-
-2. **🏢 3D AI Autonomous Office Simulator (`office.html`)**
-   - จำลองอาคารสำนักงานและพนักงาน 14 แผนกแบบ 3D WebGL (Three.js) ประหยัดทรัพยากร
-   - ซิงก์สถานะการทำงานจริงของบอท AI แต่ละตัวผ่าน Firestore แบบ Real-Time
-   - มีระบบ Executive Inbox, ห้องประชุมเสมือน, Proof of Work Lab และบันทึกผลงาน
-
-3. **🤖 Autonomous AI Workforce Engine (`worker-engine.js`)**
-   - ทีมพนักงาน AI ประจำ 14 แผนก (Dev, QA, PM, Data Analyst, Legal, Finance, Marketing ฯลฯ)
-   - ดึงข้อมูลสภาพอากาศจาก Open-Meteo API เพื่อวิเคราะห์ Surge Pricing ทุกชั่วโมง
-   - บันทึกงานที่ทำสำเร็จลง Firestore หรือ `project-resources.json` โดยอัตโนมัติ
-
-4. **🎩 Baron Secretary AI (`telegram-baron.js`)**
-   - บอทเลขาฯ ส่วนตัวผ่าน Telegram รองรับระบบ Multi-Admin
-   - คำสั่งควบคุมระบบระยะไกล เช่น `/status`, `/deploy`, `/fix`, `/report`, `/workforce`
-   - เชื่อมต่อกับ Google Gemini API เพื่อตอบคำถามและวิเคราะห์ข้อมูลเชิงกลยุทธ์
-
-5. **🛡️ Zero-Bug Pre-Deploy Automated Test Runner (`test-runner.js`)**
-   - ระบบทดสอบอัตโนมัติ 26 การทดสอบ ครอบคลุม Core HTML, AI Engines, API Integrations, Security & Configuration
-   - ป้องกันการ deploy โค้ดที่มีข้อผิดพลาดขึ้น Production
+**RideCheck Thailand** เป็นแพลตฟอร์มเปรียบเทียบราคาเรียกรถโดยสารออนไลน์แบบเรียลไทม์ (Ride-Hailing Comparison Engine) ตัวแรกที่สร้างขึ้นเพื่อผู้บริโภคชาวไทย โดยรวบรวมและเปรียบเทียบค่าโดยสารระหว่าง **Grab, Bolt, LINE MAN, inDrive, Maxim** ภายใต้มาตรฐานความโปร่งใสระดับสูงสุด (Zero-Scam, Zero-Random, Pure Deterministic Math) พร้อมระบบนำทางสำหรับรถจักรยานยนต์ที่คำนึงถึงข้อห้ามตามกฎหมายจราจรไทยอย่างแท้จริง
 
 ---
 
-## 🏗️ สถาปัตยกรรมระบบ (Architecture)
+## 🧭 พันธกิจและความโปร่งใส (Core Principles & Transparency)
+
+1. **🚫 ไม่มีสุ่มราคา (Zero `Math.random()`)**:
+   ทุกตัวเลขราคาและเวลารอรถคำนวณจากสูตรคณิตศาสตร์บริสุทธิ์ (Pure Deterministic Functions) และพิกัดถนนจริงเท่านั้น เรียกคำนวณซ้ำ 1,000 ครั้งด้วย input เดียวกัน ย่อมได้ผลลัพธ์ตรงกันเป๊ะ 100%
+2. **🏷️ ปลดส่วนลดโปรโมชันสมมติ (Honest Display Price)**:
+   ราคาที่แสดงต่อผู้ใช้คือ **ราคาเต็มปกติ (Regular Price)** ไม่มีการหักลบโปรโมชันหลอกตา (เช่น Grab Saver -18% หรือ Bolt Promo -25%) เพื่อให้ราคาประมาณการตรงกับบิลจริงที่ผู้โดยสารต้องจ่าย
+3. **🤝 ช่วงราคาต่อรองของ inDrive (-15% ถึง +18%)**:
+   inDrive ใช้โมเดลการประมูลราคาโดยผู้โดยสาร ระบบแสดงช่วงราคาแนะนำที่คนขับมีโอกาสรับงานจริง พร้อมระบุข้อความชัดเจน
+4. **🛵 ระบบเส้นทางมอเตอร์ไซค์ถูกกฎหมาย (Legal Motorcycle Routing)**:
+   ไม่ใช้ระยะทางรถยนต์มาคิดราคามอเตอร์ไซค์อีกต่อไป ระบบตรวจจับและเลี่ยงสะพานภูมิพล, มอเตอร์เวย์สาย 7/9, ทางด่วนยกระดับ และอุโมงค์ต้องห้ามตามประกาศราชกิจจานุเบกษา
+5. **⚡ Dynamic Surge ตามอุปสงค์และสภาพอากาศจริง**:
+   เชื่อมต่อ API สภาพอากาศ Open-Meteo แบบสด พร้อม fallback ตามสถิติชั่วโมงเร่งด่วนของประเทศไทยอย่างโปร่งใส
+
+---
+
+## 🌟 ฟีเจอร์หลักของระบบ (System Highlights)
+
+### 1. Universal Fare Calculation Engine ([`fare-model.js`](fare-model.js))
+- โครงสร้างโมดูลมาตรฐาน UMD (รองรับทั้ง Browser `window.FareModel` และ Node.js `require`)
+- คืนค่า Schema ครบถ้วน: `low`, `mid`, `high`, `breakdown`, `confidence`, `modelVersion`, `calibratedAt`, `sampleCount`, `coverageLevel`
+- คำนวณค่าแท็กซี่มิเตอร์ตามประกาศกฎกระทรวงคมนาคม พ.ศ. 2566
+- รองรับการโหลดชุดพารามิเตอร์ที่ผ่านการสอบเทียบ (`FareModel.applyCalibration(...)`)
+
+### 2. Motorcycle Routing & Restriction Engine ([`moto-router.js`](moto-router.js))
+- ตรวจสอบความถูกต้องตามกฎหมาย:
+  - **ห้ามขึ้นสะพานภูมิพล 1–2**: ตามข้อบังคับ บช.น. และกรมทางหลวงชนบท (กระแสลมแรงเสี่ยงอุบัติเหตุ) $\rightarrow$ อ้อมไปใช้แพขนานยนต์หรือถนนพระราม 3
+  - **ห้ามเข้ามอเตอร์เวย์สาย 7 และสาย 9**: ตามกฎกระทรวงคมนาคม $\rightarrow$ อ้อมไปใช้ทางคู่ขนาน Frontage Road หรือถนนกิ่งแก้ว
+  - **ทางพิเศษยกระดับล้วน**: รายงาน `moto_feasible: "no"` พร้อมเตือนให้เลือกใช้รถยนต์
+- ฐานข้อมูลข้อห้ามราชการในรูปแบบ GeoJSON ([`data/moto-restrictions.geojson`](data/moto-restrictions.geojson))
+- สถาปัตยกรรมเซิร์ฟเวอร์นำทาง Valhalla + OSRM Custom Profile ([`docs/routing.md`](docs/routing.md))
+
+### 3. Empirical Model Calibration Engine ([`scripts/calibrate.js`](scripts/calibrate.js))
+- วิเคราะห์ข้อมูลราคาที่เก็บได้จริงจากแอปเรียกรถในประเทศไทย ([`data/calibration.csv`](data/calibration.csv))
+- ใช้วิธี **Ridge Regularization (Tikhonov Least Squares)** ป้องกันปัญหา Collinearity ระหว่างระยะทางและเวลา
+- คำนวณค่าพารามิเตอร์ต่อค่ายรถและส่งออกเป็น [`data/calibrated-parameters.json`](data/calibrated-parameters.json)
+- ผลลัพธ์ความแม่นยำปัจจุบัน:
+  - **Overall MAPE**: `12.17%` (เกณฑ์มาตรฐาน: < 15.0%)
+  - **Overall MAE**: `฿11.97`
+  - **Band Coverage**: `55.6%`
+
+### 4. Dynamic Surge & Weather Engine ([`surge-engine.js`](surge-engine.js))
+- เชื่อมต่อ Open-Meteo API ตรวจวัดปริมาณฝน (มม./ชม.) และ WMO Weather Code
+- วิเคราะห์ชั่วโมงเร่งด่วนวันทำงานเช้า (07:00-09:30) และเย็น (17:00-20:00) พร้อมช่วงเที่ยงคืนวันหยุดสุดสัปดาห์
+- จำแนกความไวต่อ Surge ตามแต่ละค่าย (Grab/Bolt ตอบสนองเร็ว, Maxim อัตราคงที่กว่า, inDrive เปิดให้ผู้โดยสารเสนอราคา)
+- มี Offline Baseline รองรับกรณีเครือข่ายขัดข้องโดยไม่ทำให้ระบบหยุดชะงัก
+
+### 5. Community Crowdsource Data Contribution Form
+- หน้าเว็บ [`index.html`](index.html) และ [`v2.html`](v2.html) มีฟอร์มให้ชุมชนช่วยส่งข้อมูลราคาจริงที่พบจากแอป
+- บันทึกลง `localStorage` และ Firestore เพื่อนำมาคำนวณ Re-calibration
+- มีปุ่ม **Export CSV** สำหรับนำข้อมูลไปเปิด Pull Request บน GitHub
+
+---
+
+## 🏗️ โครงสร้างไฟล์ในโปรเจกต์ (Project Structure)
 
 ```text
-[ ผู้ใช้งาน / Clients ]
-       │
-       ├──► Web Frontend (index.html / v2.html) ──► Leaflet / Google Maps + OSRM
-       │           │
-       │           ▼
-       ├──► 3D AI Virtual Office (office.html) ──► Three.js WebGL (60 FPS)
-       │           │
-       ▼           ▼
-[ Firebase Firestore Database ]  ◄── (Hardened firestore.rules)
-       ▲           ▲
-       │           │
-[ Node.js Backend & AI Workforce ]
-       ├──► worker-engine.js (Autonomous AI 14 แผนก)
-       ├──► telegram-baron.js (Telegram Bot + Gemini AI)
-       └──► test-runner.js (Automated Pre-Deploy Quality Gate)
+RideCheck/
+├── .github/
+│   ├── workflows/
+│   │   ├── auto-calibrate.yml       # รันสอบเทียบโมเดลอัตโนมัติทุกสัปดาห์ (Sunday 18:00 UTC)
+│   │   └── bot-runner.yml           # CI/CD & Deploy Pipeline
+│   └── ISSUE_TEMPLATE/
+│       └── moto-restriction-report.yml # แม่แบบแจ้งจุดห้ามมอเตอร์ไซค์
+├── data/
+│   ├── calibration.csv              # ชุดข้อมูลการเดินทางจริง 36+ ตัวอย่าง
+│   ├── calibrated-parameters.json   # พารามิเตอร์ราคาหลังสอบเทียบ (MAPE 12.17%)
+│   └── moto-restrictions.geojson   # พิกัด 12 จุดห้ามมอเตอร์ไซค์ตามกฎหมายไทย
+├── docs/
+│   └── routing.md                   # คู่มือเปรียบเทียบและติดตั้ง Valhalla / OSRM
+├── routing/
+│   ├── docker-compose.valhalla.yml  # Docker Container Setup สำหรับ Valhalla Router
+│   └── motorcycle.lua               # OSRM Custom Profile สำหรับมอเตอร์ไซค์ไทย (110-150cc)
+├── scripts/
+│   └── calibrate.js                 # สคริปต์ Multivariate Linear Regression Fit
+├── tests/
+│   └── fixtures/
+│       └── routes.json              # Multi-Region Test Fixtures (กทม., เชียงใหม่, ภูเก็ต)
+├── app.js                           # Frontend Core Logic
+├── fare-model.js                    # Universal Pricing Model (Deterministic)
+├── moto-router.js                   # Motorcycle Routing & Restriction Engine
+├── surge-engine.js                  # Dynamic Surge & Weather Engine
+├── index.html                       # Production Web App (Longdo Map + Google Maps)
+├── v2.html                          # Next-Gen Dual-Pane Web App
+├── test-runner.js                   # Automated Pre-Deploy Quality Gate (121 Tests)
+├── LICENSE                          # MIT License
+└── package.json
 ```
 
 ---
 
-## 🚀 เริ่มต้นใช้งาน (Getting Started)
+## 🚀 เริ่มต้นใช้งานและทดสอบ (Getting Started)
 
 ### 1. ความต้องการของระบบ (Prerequisites)
-- [Node.js](https://nodejs.org/) v18.0.0 หรือใหม่กว่า
-- บัญชี [Firebase Console](https://console.firebase.google.com/) (สำหรับ Firestore & Hosting)
-- บัญชี [Telegram](https://telegram.org/) และสร้างบอทผ่าน [@BotFather](https://t.me/botfather) (กรณีต้องการใช้ Baron AI)
-- [Google Gemini API Key](https://aistudio.google.com/) (กรณีต้องการเปิดใช้ AI Agent Intelligence)
+- [Node.js](https://nodejs.org/) v20 หรือใหม่กว่า
+- Git
 
-### 2. โคลนและติดตั้ง Dependencies
+### 2. ติดตั้ง Dependencies
 ```bash
 git clone https://github.com/tp1600x-star/ridecheck.git
 cd ridecheck
 npm install
 ```
 
-### 3. ตั้งค่า Environment Variables
-คัดลอกไฟล์ `.env.example` เป็น `.env` แล้วระบุค่าของคุณ:
-```bash
-cp .env.example .env
-```
-เนื้อหาใน `.env`:
-```ini
-# Google Gemini API Key สำหรับประมวลผลคำสั่ง AI
-GEMINI_API_KEY=your_gemini_api_key_here
-
-# Telegram Bot Token จาก @BotFather
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
-
-# Telegram Numeric User IDs สำหรับผู้ดูแลระบบ (Admin)
-CEO_USER_ID=123456789
-PARTNER_USER_ID=987654321
-```
-
-### 4. รันระบบทดสอบ (Pre-Deploy Tests)
+### 3. รันระบบทดสอบคุณภาพ (QA Test Runner)
 ```bash
 npm test
 ```
-ผลลัพธ์ควรผ่าน 100% (26/26 tests passed) ก่อนขึ้น Production
+ผลลัพธ์จะทำการตรวจสอบทั้ง 9 กลุ่มการทดสอบ (121 รายการ):
+- Syntax Integrity & Core Files
+- JSON Schema & Metadata
+- Longdo & Google Maps Geocoding
+- Universal Fare Model Determinism
+- Zero-Leak Security Audit
+- Motorcycle Routing & Restrictions Avoidance
+- Empirical Calibration & Parameter Fitting
+- Dynamic Surge & Weather Fallback
+- Frontend Community Contribution & Transparency UI
 
-### 5. เปิดใช้งานบริการต่างๆ
+### 4. รันการสอบเทียบโมเดลราคาด้วยตนเอง (Manual Calibration)
 ```bash
-# รันเว็บเซิร์ฟเวอร์แบบ Local
-npm start
-
-# รัน Autonomous AI Workforce Cycle
-npm run worker:once
-
-# รัน Baron Secretary Telegram Bot
-npm run baron
+node scripts/calibrate.js
 ```
 
 ---
 
-## 🔒 ความปลอดภัยและความเป็นส่วนตัว (Security Best Practices)
+## 🤝 ร่วมพัฒนาโปรเจกต์ (Contributing)
 
-- **Telegram Bot Tokens:** ห้าม commit token ลงใน repository โดยเด็ดขาด ให้ใช้ `process.env.TELEGRAM_BOT_TOKEN` หรือ `process.env.TELEGRAM_TOKEN` เท่านั้น หากเผลอทำ token หลุด ให้ใช้คำสั่ง `/revoke` ใน [@BotFather](https://t.me/botfather) ทันที
-- **Firebase Web API Key:** Key ฝั่ง Client Web (`firebase-init.js`) ถูกจำกัดสิทธิ์ความปลอดภัยผ่าน **Cloud Firestore Security Rules (`firestore.rules`)** เพื่อป้องกันการแทรกแซงหรือเขียนทับข้อมูลโดยไม่ได้รับอนุญาต
-- **Logs & Private Data:** ไดเรกทอรี `logs/` ถูกเพิ่มใน `.gitignore` เรียบร้อยแล้ว เพื่อไม่ให้ข้อความแชทและประวัติการทำงานถูกเผยแพร่สู่สาธารณะ
-
----
-
-## 📁 โครงสร้างโปรเจกต์ (Project Structure)
-
-```text
-ridecheck/
-├── index.html                 # หน้าเว็บหลักสำหรับเปรียบเทียบราคารถ (Web App)
-├── office.html                # อาคารจำลองสำนักงานเสมือน 3D AI Headquarters
-├── code-map.html              # Interactive Architecture Visualization Map
-├── ridecheck-db.js            # Universal Data Layer (Firestore + localStorage)
-├── firebase-init.js           # Client-side Firebase Configuration
-├── firebase-bridge.js         # Node.js Server-side Firebase Bridge
-├── firestore.rules            # Hardened Firestore Security Rules
-├── firebase.json              # Firebase Hosting & Firestore deployment spec
-├── worker-engine.js           # Autonomous 14-Department AI Workforce Engine
-├── telegram-baron.js          # Telegram Multi-Admin Commander Bot
-├── test-runner.js             # Automated Zero-Bug Pre-Deploy Testing Suite
-├── .github/workflows/         # GitHub Actions CI/CD (bot-runner.yml)
-├── .env.example               # Example Environment Configuration
-├── LICENSE                    # MIT License
-└── package.json               # Project manifest and scripts
-```
+RideCheck เป็นโครงการ Open Source 100% ทุกท่านสามารถมีส่วนร่วมได้ดังนี้:
+1. **แจ้งราคาจริงที่พบจากแอป**: ผ่านฟอร์ม "ส่งข้อมูลราคา" บนหน้าเว็บ หรือส่ง PR เพิ่มแถวใน [`data/calibration.csv`](data/calibration.csv)
+2. **แจ้งจุดห้ามมอเตอร์ไซค์เพิ่มเติม**: เปิด Issue ผ่าน [Moto Restriction Template](.github/ISSUE_TEMPLATE/moto-restriction-report.yml) พร้อมแนบประกาศราชกิจจานุเบกษาหรือข้อบังคับตำรวจ
+3. **พัฒนาอัลกอริทึม Routing / ML**: เสนอการปรับปรุงสคริปต์ Least Squares หรือ OSRM Lua Profile
 
 ---
 
-## 📄 ใบอนุญาต (License)
+## 📄 สัญญาอนุญาต (License)
 
-โปรเจกต์นี้เผยแพร่ภายใต้สัญญาอนุญาต [MIT License](LICENSE) สามารถนำไปต่อยอด ดัดแปลง และพัฒนาต่อได้อย่างอิสระ
+โปรเจกต์นี้เผยแพร่ภายใต้สัญญาอนุญาต **[MIT License](LICENSE)** สามารถนำไปใช้งาน ศึกษา และต่อยอดได้อย่างอิสระ

@@ -1,0 +1,385 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "title": "RideCheck Official Motorcycle Restrictions Database (Thailand)",
+    "version": "1.0.0",
+    "lastUpdated": "2026-10-01",
+    "description": "ฐานข้อมูลทางพิเศษ สะพาน และอุโมงค์ที่กฎหมายไทยห้ามรถจักรยานยนต์สัญจร ทุกรายการอ้างอิงจากหน่วยงานรัฐอย่างเป็นทางการ (การทางพิเศษแห่งประเทศไทย, กรมทางหลวง, กรมทางหลวงชนบท, กองบัญชาการตำรวจนครบาล)"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "restr-bhumibol-bridge",
+        "name_th": "สะพานภูมิพล 1 และสะพานภูมิพล 2 (ถนนวงแหวนอุตสาหกรรม)",
+        "restriction": "ห้ามรถจักรยานยนต์ข้ามสะพานเด็ดขาดตามข้อบังคับเจ้าพนักงานจราจร (ความสูงและกระแสลมแรง เสี่ยงอุบัติเหตุตกสะพาน ให้ใช้แพขนานยนต์พระประแดงแทน)",
+        "source_url": "https://drr.go.th/bhumibol-bridge-regulations/",
+        "source_org": "กรมทางหลวงชนบท (DRR) / กองบัญชาการตำรวจนครบาล",
+        "verifiedDate": "2026-10-01",
+        "verifiedBy": "RideCheck Transport Data Team",
+        "penalty_type": "prohibited",
+        "detour_alternative": "แพขนานยนต์พระประแดง หรือ สะพานพระราม 3 (ชั้นล่าง)",
+        "name": "สะพานภูมิพล 1 และสะพานภูมิพล 2 (ถนนวงแหวนอุตสาหกรรม)",
+        "authority": "กรมทางหลวงชนบท (DRR) / กองบัญชาการตำรวจนครบาล",
+        "verified_at": "2026-10-01",
+        "status": "active",
+        "type": "bridge"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            100.5401,
+            13.6664
+          ],
+          [
+            100.5432,
+            13.6688
+          ],
+          [
+            100.5463,
+            13.6702
+          ],
+          [
+            100.551,
+            13.671
+          ],
+          [
+            100.5562,
+            13.6698
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "restr-motorway-7",
+        "name_th": "ทางหลวงพิเศษระหว่างเมืองหมายเลข 7 (กรุงเทพฯ - ชลบุรี - พัทยา - มาบตาพุด)",
+        "restriction": "ห้ามรถจักรยานยนต์เข้าใช้ทางหลวงพิเศษระหว่างเมือง ตามกฎกระทรวงคมนาคมกำหนดประเภทรถบนทางหลวงพิเศษ พ.ศ. 2542 ให้ใช้ทางบริการคู่ขนาน (Frontage Road)",
+        "source_url": "https://www.motorway.go.th/regulation/",
+        "source_org": "กรมทางหลวง (DOH)",
+        "verifiedDate": "2026-10-01",
+        "verifiedBy": "RideCheck Transport Data Team",
+        "penalty_type": "prohibited",
+        "detour_alternative": "ถนนคู่ขนานมอเตอร์เวย์ / ถนนบางนา-ตราด / ถนนร่มเกล้า",
+        "name": "ทางหลวงพิเศษระหว่างเมืองหมายเลข 7 (กรุงเทพฯ - ชลบุรี - พัทยา - มาบตาพุด)",
+        "authority": "กรมทางหลวง (DOH)",
+        "verified_at": "2026-10-01",
+        "status": "active",
+        "type": "motorway"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            100.6725,
+            13.7314
+          ],
+          [
+            100.7482,
+            13.7225
+          ],
+          [
+            100.825,
+            13.714
+          ],
+          [
+            100.91,
+            13.702
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "restr-motorway-9",
+        "name_th": "ทางหลวงพิเศษระหว่างเมืองหมายเลข 9 (ถนนกาญจนาภิเษก วงแหวนรอบนอกตะวันออก/ใต้)",
+        "restriction": "ห้ามรถจักรยานยนต์เข้าใช้ทางหลวงพิเศษหมายเลข 9 ตามกฎกระทรวงคมนาคม พ.ศ. 2542",
+        "source_url": "https://www.motorway.go.th/regulation/",
+        "source_org": "กรมทางหลวง (DOH)",
+        "verifiedDate": "2026-10-01",
+        "verifiedBy": "RideCheck Transport Data Team",
+        "penalty_type": "prohibited",
+        "detour_alternative": "ทางคู่ขนานวงแหวนกาญจนาภิเษก",
+        "name": "ทางหลวงพิเศษระหว่างเมืองหมายเลข 9 (ถนนกาญจนาภิเษก วงแหวนรอบนอกตะวันออก/ใต้)",
+        "authority": "กรมทางหลวง (DOH)",
+        "verified_at": "2026-10-01",
+        "status": "active",
+        "type": "motorway"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            100.685,
+            13.65
+          ],
+          [
+            100.69,
+            13.72
+          ],
+          [
+            100.702,
+            13.81
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "restr-expressway-burapha-withi",
+        "name_th": "ทางพิเศษบูรพาวิถี (บางนา - ชลบุรี ทางยกระดับ)",
+        "restriction": "ห้ามรถจักรยานยนต์ขึ้นทางพิเศษบูรพาวิถี ตามข้อบังคับการทางพิเศษแห่งประเทศไทย พ.ศ. 2550",
+        "source_url": "https://www.exat.co.th/law-regulation/",
+        "source_org": "การทางพิเศษแห่งประเทศไทย (EXAT)",
+        "verifiedDate": "2026-10-01",
+        "verifiedBy": "RideCheck Transport Data Team",
+        "penalty_type": "prohibited",
+        "detour_alternative": "ถนนเทพรัตน (บางนา-ตราด ทางราบ)",
+        "name": "ทางพิเศษบูรพาวิถี (บางนา - ชลบุรี ทางยกระดับ)",
+        "authority": "การทางพิเศษแห่งประเทศไทย (EXAT)",
+        "verified_at": "2026-10-01",
+        "status": "active",
+        "type": "expressway"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            100.612,
+            13.666
+          ],
+          [
+            100.75,
+            13.625
+          ],
+          [
+            100.9,
+            13.56
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "restr-expressway-chalerm-maha-nakhon",
+        "name_th": "ทางพิเศษเฉลิมมหานคร (ดินแดง - บางนา - ดาวคะนอง)",
+        "restriction": "ห้ามรถจักรยานยนต์ขึ้นทางพิเศษทุกกรณี ตาม พ.ร.บ.การทางพิเศษแห่งประเทศไทย พ.ศ. 2550",
+        "source_url": "https://www.exat.co.th/law-regulation/",
+        "source_org": "การทางพิเศษแห่งประเทศไทย (EXAT)",
+        "verifiedDate": "2026-10-01",
+        "verifiedBy": "RideCheck Transport Data Team",
+        "penalty_type": "prohibited",
+        "detour_alternative": "ถนนวิภาวดีรังสิต (ทางราบ) / ถนนพระราม 4 / ถนนสุขุมวิท",
+        "name": "ทางพิเศษเฉลิมมหานคร (ดินแดง - บางนา - ดาวคะนอง)",
+        "authority": "การทางพิเศษแห่งประเทศไทย (EXAT)",
+        "verified_at": "2026-10-01",
+        "status": "active",
+        "type": "expressway"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            100.554,
+            13.771
+          ],
+          [
+            100.548,
+            13.725
+          ],
+          [
+            100.589,
+            13.678
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "restr-flyover-asok-phetchaburi",
+        "name_th": "สะพานข้ามแยกอโศก-เพชรบุรี",
+        "restriction": "ห้ามรถจักรยานยนต์ขึ้นสะพานข้ามแยก ตามข้อบังคับเจ้าพนักงานจราจรในเขตกรุงเทพมหานคร พ.ศ. 2559 (ข้อบังคับ 39 สะพาน)",
+        "source_url": "https://ratchakitcha.soc.go.th/documents/2056247.pdf",
+        "source_org": "กองบัญชาการตำรวจนครบาล (บช.น.)",
+        "verifiedDate": "2026-10-01",
+        "verifiedBy": "RideCheck Transport Data Team",
+        "penalty_type": "prohibited",
+        "detour_alternative": "ผ่านสี่แยกอโศก-เพชรบุรี ระดับราบ",
+        "name": "สะพานข้ามแยกอโศก-เพชรบุรี",
+        "authority": "กองบัญชาการตำรวจนครบาล (บช.น.)",
+        "verified_at": "2026-10-01",
+        "status": "active",
+        "type": "flyover"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.5632,
+          13.7489
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "restr-flyover-khlong-tan",
+        "name_th": "สะพานข้ามแยกคลองตัน (ถนนเพชรบุรีตัดใหม่ - พัฒนาการ)",
+        "restriction": "ห้ามรถจักรยานยนต์ขึ้นสะพานข้ามแยกคลองตัน (ทางโค้งอันตราย จุดเสี่ยงอุบัติเหตุรุนแรง)",
+        "source_url": "https://ratchakitcha.soc.go.th/documents/2056247.pdf",
+        "source_org": "กองบัญชาการตำรวจนครบาล (บช.น.)",
+        "verifiedDate": "2026-10-01",
+        "verifiedBy": "RideCheck Transport Data Team",
+        "penalty_type": "prohibited",
+        "detour_alternative": "ผ่านสี่แยกคลองตัน ระดับราบ",
+        "name": "สะพานข้ามแยกคลองตัน (ถนนเพชรบุรีตัดใหม่ - พัฒนาการ)",
+        "authority": "กองบัญชาการตำรวจนครบาล (บช.น.)",
+        "verified_at": "2026-10-01",
+        "status": "active",
+        "type": "flyover"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.5978,
+          13.7412
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "restr-flyover-thai-belgian",
+        "name_th": "สะพานข้ามแยกไทย-เบลเยียม (ถนนพระราม 4 ข้ามแยกวิทยุ)",
+        "restriction": "ห้ามรถจักรยานยนต์ขึ้นสะพานข้ามแยก ตามข้อบังคับเจ้าพนักงานจราจร",
+        "source_url": "https://ratchakitcha.soc.go.th/documents/2056247.pdf",
+        "source_org": "กองบัญชาการตำรวจนครบาล (บช.น.)",
+        "verifiedDate": "2026-10-01",
+        "verifiedBy": "RideCheck Transport Data Team",
+        "penalty_type": "prohibited",
+        "detour_alternative": "ผ่านสี่แยกวิทยุ ระดับราบ",
+        "name": "สะพานข้ามแยกไทย-เบลเยียม (ถนนพระราม 4 ข้ามแยกวิทยุ)",
+        "authority": "กองบัญชาการตำรวจนครบาล (บช.น.)",
+        "verified_at": "2026-10-01",
+        "status": "active",
+        "type": "flyover"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.5422,
+          13.7275
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "restr-flyover-thai-japanese",
+        "name_th": "สะพานข้ามแยกไทย-ญี่ปุ่น (ถนนพระราม 4 ข้ามแยกศาลาแดง/อังรีดูนังต์)",
+        "restriction": "ห้ามรถจักรยานยนต์ขึ้นสะพานข้ามแยก ตามข้อบังคับเจ้าพนักงานจราจร",
+        "source_url": "https://ratchakitcha.soc.go.th/documents/2056247.pdf",
+        "source_org": "กองบัญชาการตำรวจนครบาล (บช.น.)",
+        "verifiedDate": "2026-10-01",
+        "verifiedBy": "RideCheck Transport Data Team",
+        "penalty_type": "prohibited",
+        "detour_alternative": "ผ่านสี่แยกศาลาแดง ระดับราบ",
+        "name": "สะพานข้ามแยกไทย-ญี่ปุ่น (ถนนพระราม 4 ข้ามแยกศาลาแดง/อังรีดูนังต์)",
+        "authority": "กองบัญชาการตำรวจนครบาล (บช.น.)",
+        "verified_at": "2026-10-01",
+        "status": "active",
+        "type": "flyover"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.5338,
+          13.7302
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "restr-tunnel-kaset",
+        "name_th": "อุโมงค์ลอดแยกเกษตร (ถนนงามวงศ์วาน - ประเสริฐมนูกิจ)",
+        "restriction": "ห้ามรถจักรยานยนต์ลงอุโมงค์ลอดแยก ตามประกาศกรุงเทพมหานครและ บช.น. (ทัศนวิสัยจำกัดและมลพิษทางอากาศ)",
+        "source_url": "https://ratchakitcha.soc.go.th/documents/2056247.pdf",
+        "source_org": "กรุงเทพมหานคร (BMA) / บช.น.",
+        "verifiedDate": "2026-10-01",
+        "verifiedBy": "RideCheck Transport Data Team",
+        "penalty_type": "prohibited",
+        "detour_alternative": "ผ่านสี่แยกเกษตร ระดับราบ",
+        "name": "อุโมงค์ลอดแยกเกษตร (ถนนงามวงศ์วาน - ประเสริฐมนูกิจ)",
+        "authority": "กรุงเทพมหานคร (BMA) / บช.น.",
+        "verified_at": "2026-10-01",
+        "status": "active",
+        "type": "tunnel"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.5714,
+          13.8406
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "restr-tunnel-huai-khwang",
+        "name_th": "อุโมงค์ลอดแยกห้วยขวาง (ถนนรัชดาภิเษก)",
+        "restriction": "ห้ามรถจักรยานยนต์ลงอุโมงค์ลอดแยก ตามข้อบังคับเจ้าพนักงานจราจร",
+        "source_url": "https://ratchakitcha.soc.go.th/documents/2056247.pdf",
+        "source_org": "กรุงเทพมหานคร (BMA) / บช.น.",
+        "verifiedDate": "2026-10-01",
+        "verifiedBy": "RideCheck Transport Data Team",
+        "penalty_type": "prohibited",
+        "detour_alternative": "ผ่านสี่แยกห้วยขวาง ระดับราบ",
+        "name": "อุโมงค์ลอดแยกห้วยขวาง (ถนนรัชดาภิเษก)",
+        "authority": "กรุงเทพมหานคร (BMA) / บช.น.",
+        "verified_at": "2026-10-01",
+        "status": "active",
+        "type": "tunnel"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.5735,
+          13.7788
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "restr-tunnel-sutthisan",
+        "name_th": "อุโมงค์ลอดแยกสุทธิสาร (ถนนรัชดาภิเษก)",
+        "restriction": "ห้ามรถจักรยานยนต์ลงอุโมงค์ลอดแยก ตามข้อบังคับเจ้าพนักงานจราจร",
+        "source_url": "https://ratchakitcha.soc.go.th/documents/2056247.pdf",
+        "source_org": "กรุงเทพมหานคร (BMA) / บช.น.",
+        "verifiedDate": "2026-10-01",
+        "verifiedBy": "RideCheck Transport Data Team",
+        "penalty_type": "prohibited",
+        "detour_alternative": "ผ่านสี่แยกสุทธิสาร ระดับราบ",
+        "name": "อุโมงค์ลอดแยกสุทธิสาร (ถนนรัชดาภิเษก)",
+        "authority": "กรุงเทพมหานคร (BMA) / บช.น.",
+        "verified_at": "2026-10-01",
+        "status": "active",
+        "type": "tunnel"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.5739,
+          13.7895
+        ]
+      }
+    }
+  ]
+}

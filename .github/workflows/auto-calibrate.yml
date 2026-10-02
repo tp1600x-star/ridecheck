@@ -1,0 +1,79 @@
+name: Weekly Fare Model Auto-Calibration
+
+on:
+  schedule:
+    # Run every Sunday at 18:00 UTC (Monday 01:00 AM Bangkok Time)
+    - cron: '0 18 * * 0'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  auto-calibrate:
+    name: 📈 Model Calibration & Quality Validation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'package.json'
+
+      - name: 📦 Install Dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: 🔬 Execute Parameter Calibration Engine
+        run: |
+          node scripts/calibrate.js
+
+      - name: 🧪 Run QA & Pre-Deployment Verification (Zero-Tolerance)
+        run: |
+          npm test
+
+      - name: 📋 Generate Calibration Job Summary
+        run: |
+          node -e '
+            const fs = require("fs");
+            const data = JSON.parse(fs.readFileSync("./data/calibrated-parameters.json", "utf8"));
+            const summary = [
+              "## 📈 RideCheck Automated Model Calibration Summary",
+              "",
+              `- **Model Version**: \`${data.modelVersion}\``,
+              `- **Calibrated At**: \`${data.calibratedAt}\``,
+              `- **Empirical Sample Count**: **${data.totalSampleCount} records**`,
+              `- **Overall MAE**: **฿${data.metrics.overallMAE}**`,
+              `- **Overall MAPE**: **${data.metrics.overallMAPE}%** (Criteria: < 15.0%)`,
+              `- **Model Band Coverage**: **${data.metrics.overallCoveragePercent}%**`,
+              "",
+              "### 📊 App-Tier Parameter Matrix",
+              "| App & Tier | Base Fare | Per Km | Per Min | MAE | MAPE | Coverage |",
+              "| :--- | :---: | :---: | :---: | :---: | :---: | :---: |"
+            ];
+            for (const [key, p] of Object.entries(data.parameters)) {
+              summary.push(`| **${key.toUpperCase()}** | ฿${p.baseFare} | ฿${p.perKm} | ฿${p.perMin} | ฿${p.mae} | ${p.mape}% | ${p.coverage}% |`);
+            }
+            summary.push("", "✅ **Verification**: Passed 100% QA Automated Tests. Parameters deployed to production.");
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary.join("\n") + "\n");
+          '
+
+      - name: 💾 Commit & Push Calibrated Parameters
+        run: |
+          git config --local user.email "bot-workforce@ridecheck.th"
+          git config --local user.name "RideCheck Model Calibration Bot"
+          git add data/calibrated-parameters.json
+          if git diff --staged --quiet; then
+            echo "No parameter changes detected, skipping commit."
+          else
+            git commit -m "chore(calibration): weekly automated model parameter fit [skip ci]"
+            git push
+          fi

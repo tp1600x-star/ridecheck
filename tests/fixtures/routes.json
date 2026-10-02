@@ -1,0 +1,115 @@
+{
+  "description": "RideCheck Multi-Region Route Test Fixtures for Motorcycle Legality & Car Detour Comparison",
+  "version": "1.0.0",
+  "verifiedDate": "2026-10-01",
+  "fixtures": [
+    {
+      "id": "bkk-bhumibol-avoidance",
+      "region": "bangkok",
+      "name": "บางนา ไป พระราม 2 (เลี่ยงสะพานภูมิพลและทางพิเศษ)",
+      "origin": { "lat": 13.6683, "lng": 100.6042, "name": "สี่แยกบางนา" },
+      "dest": { "lat": 13.6705, "lng": 100.4720, "name": "เซ็นทรัล พระราม 2" },
+      "car": {
+        "distance_km": 18.2,
+        "duration_min": 22,
+        "uses_expressway": true,
+        "uses_bhumibol": true
+      },
+      "moto": {
+        "distance_km": 24.6,
+        "duration_min": 44,
+        "detour_ratio": 1.35,
+        "moto_feasible": "yes",
+        "must_avoid_restrictions": [
+          "สะพานภูมิพล 1 และสะพานภูมิพล 2 (ถนนวงแหวนอุตสาหกรรม)",
+          "ทางพิเศษเฉลิมมหานคร (ดินแดง - บางนา - ดาวคะนอง)"
+        ],
+        "detour_note": "เส้นทางมอเตอร์ไซค์ต้องเลี่ยงสะพานภูมิพลและทางด่วน โดยอ้อมผ่านแพขนานยนต์พระประแดงหรือถนนพระราม 3 (ชั้นล่าง)"
+      }
+    },
+    {
+      "id": "bkk-motorway7-avoidance",
+      "region": "bangkok-east",
+      "name": "พระราม 9 ไป สนามบินสุวรรณภูมิ (เลี่ยงมอเตอร์เวย์สาย 7)",
+      "origin": { "lat": 13.7460, "lng": 100.6120, "name": "ถนนพระราม 9 ตัดศรีนครินทร์" },
+      "dest": { "lat": 13.6900, "lng": 100.7501, "name": "อาคารผู้โดยสารสนามบินสุวรรณภูมิ" },
+      "car": {
+        "distance_km": 18.8,
+        "duration_min": 19,
+        "uses_motorway": true
+      },
+      "moto": {
+        "distance_km": 23.2,
+        "duration_min": 35,
+        "detour_ratio": 1.23,
+        "moto_feasible": "yes",
+        "must_avoid_restrictions": [
+          "ทางหลวงพิเศษระหว่างเมืองหมายเลข 7 (กรุงเทพฯ - ชลบุรี - พัทยา - มาบตาพุด)"
+        ],
+        "detour_note": "มอเตอร์ไซค์ห้ามเข้ามอเตอร์เวย์สาย 7 ต้องใช้ทางบริการคู่ขนาน (Frontage Road) หรือถนนกิ่งแก้ว"
+      }
+    },
+    {
+      "id": "expressway-only-infeasible",
+      "region": "bangkok-expressway-node",
+      "name": "จุดทางแยกต่างระดับบนทางพิเศษศรีรัช (ไม่มีทางราบ)",
+      "origin": { "lat": 13.7650, "lng": 100.5280, "name": "ทางยกระดับศรีรัช (ช่วงต่างระดับพญาไท)" },
+      "dest": { "lat": 13.7850, "lng": 100.5400, "name": "ทางยกระดับศรีรัช (ด่านคลองประปา)" },
+      "car": {
+        "distance_km": 3.2,
+        "duration_min": 4,
+        "uses_expressway": true
+      },
+      "moto": {
+        "distance_km": null,
+        "duration_min": null,
+        "detour_ratio": null,
+        "moto_feasible": "no",
+        "must_avoid_restrictions": [
+          "ทางพิเศษศรีรัช (ยกระดับ)"
+        ],
+        "detour_note": "ไม่มีเส้นทางที่รถจักรยานยนต์สัญจรได้ตามกฎหมาย เนื่องจากเป็นทางพิเศษยกระดับล้วน แนะนำใช้รถยนต์หรือแท็กซี่"
+      }
+    },
+    {
+      "id": "chiangmai-urban-to-suburb",
+      "region": "chiangmai",
+      "name": "คูเมืองเชียงใหม่ ไป สันทราย",
+      "origin": { "lat": 18.7883, "lng": 98.9853, "name": "ประตูท่าแพ เชียงใหม่" },
+      "dest": { "lat": 18.8500, "lng": 99.0400, "name": "แยกสันทรายหลวง เชียงใหม่" },
+      "car": {
+        "distance_km": 11.4,
+        "duration_min": 24,
+        "uses_expressway": false
+      },
+      "moto": {
+        "distance_km": 11.2,
+        "duration_min": 20,
+        "detour_ratio": 1.0,
+        "moto_feasible": "yes",
+        "must_avoid_restrictions": [],
+        "detour_note": "เส้นทางวิ่งราบปกติ มอเตอร์ไซค์คล่องตัวในตรอกซอยและซอยเชื่อม"
+      }
+    },
+    {
+      "id": "phuket-mountain-pass",
+      "region": "phuket",
+      "name": "ป่าตอง ไป ตัวเมืองภูเก็ต (ทางเขาเขารัง)",
+      "origin": { "lat": 7.8960, "lng": 98.2970, "name": "หาดป่าตอง ภูเก็ต" },
+      "dest": { "lat": 7.8840, "lng": 98.3910, "name": "เมืองเก่าภูเก็ต" },
+      "car": {
+        "distance_km": 14.8,
+        "duration_min": 32,
+        "uses_expressway": false
+      },
+      "moto": {
+        "distance_km": 14.8,
+        "duration_min": 28,
+        "detour_ratio": 1.0,
+        "moto_feasible": "yes",
+        "must_avoid_restrictions": [],
+        "detour_note": "ทางเขาลาดชัน ขับขี่ระมัดระวังความเร็วทางโค้ง"
+      }
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "title": "RideCheck Calibrated Fare Parameters",
+  "calibratedAt": "2026-10-02T20:06:58.297Z",
+  "modelVersion": "1.1.0-calibrated",
+  "totalSampleCount": 36,
+  "metrics": {
+    "overallMAE": 11.97,
+    "overallMAPE": 12.17,
+    "overallCoveragePercent": 55.6
+  },
+  "parameters": {
+    "grab_bike": {
+      "baseFare": 20,
+      "perKm": 7.45,
+      "perMin": 0.68,
+      "minFare": 30,
+      "sampleCount": 5,
+      "mae": 5.4,
+      "mape": 10.55,
+      "maxError": 10,
+      "coverage": 60
+    },
+    "bolt_bike": {
+      "baseFare": 18,
+      "perKm": 5.01,
+      "perMin": 0.94,
+      "minFare": 25,
+      "sampleCount": 4,
+      "mae": 6,
+      "mape": 15.19,
+      "maxError": 10,
+      "coverage": 50
+    },
+    "lineman_bike": {
+      "baseFare": 21,
+      "perKm": 5.7,
+      "perMin": 1.06,
+      "minFare": 28,
+      "sampleCount": 3,
+      "mae": 6.33,
+      "mape": 12.28,
+      "maxError": 8,
+      "coverage": 66.7
+    },
+    "maxim_bike": {
+      "baseFare": 16,
+      "perKm": 4.56,
+      "perMin": 0.55,
+      "minFare": 25,
+      "sampleCount": 4,
+      "mae": 4.5,
+      "mape": 12.76,
+      "maxError": 8,
+      "coverage": 50
+    },
+    "indrive_bike": {
+      "baseFare": 20,
+      "perKm": 5.16,
+      "perMin": 0.49,
+      "minFare": 28,
+      "sampleCount": 4,
+      "mae": 4,
+      "mape": 8.99,
+      "maxError": 7,
+      "coverage": 75
+    },
+    "grab_car": {
+      "baseFare": 35,
+      "perKm": 16.36,
+      "perMin": 0.97,
+      "minFare": 50,
+      "sampleCount": 4,
+      "mae": 29.75,
+      "mape": 15.96,
+      "maxError": 52,
+      "coverage": 25
+    },
+    "bolt_car": {
+      "baseFare": 30,
+      "perKm": 13.21,
+      "perMin": 0.71,
+      "minFare": 45,
+      "sampleCount": 4,
+      "mae": 23,
+      "mape": 15.67,
+      "maxError": 39,
+      "coverage": 25
+    },
+    "lineman_car": {
+      "baseFare": 42,
+      "perKm": 11,
+      "perMin": 2,
+      "minFare": 50,
+      "minBaseFare": 35,
+      "minPerKm": 7.5,
+      "sampleCount": 2,
+      "mae": 2,
+      "mape": 4.5,
+      "coverage": 100
+    },
+    "maxim_car": {
+      "baseFare": 32,
+      "perKm": 10.72,
+      "perMin": 0.54,
+      "minFare": 40,
+      "sampleCount": 3,
+      "mae": 17.33,
+      "mape": 10.49,
+      "maxError": 28,
+      "coverage": 66.7
+    },
+    "indrive_car": {
+      "baseFare": 37,
+      "perKm": 11.49,
+      "perMin": 0.57,
+      "minFare": 45,
+      "sampleCount": 3,
+      "mae": 20,
+      "mape": 11.25,
+      "maxError": 33,
+      "coverage": 66.7
+    }
+  }
+}
