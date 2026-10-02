@@ -311,7 +311,16 @@ function syncProjectResources(docName, payload) {
         }
 
         currentData.lastUpdated = new Date().toISOString();
-        fs.writeFileSync(PROJECT_RESOURCES_PATH, JSON.stringify(currentData, null, 2), 'utf8');
+        for (let attempt = 0; attempt < 5; attempt++) {
+            try {
+                fs.writeFileSync(PROJECT_RESOURCES_PATH, JSON.stringify(currentData, null, 2), 'utf8');
+                break;
+            } catch (writeErr) {
+                if (attempt === 4) throw writeErr;
+                const waitUntil = Date.now() + 50;
+                while (Date.now() < waitUntil) {}
+            }
+        }
     } catch (err) {
         console.warn('[Firebase Bridge] Error syncing to project-resources.json:', err.message);
     }

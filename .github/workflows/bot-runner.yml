@@ -1,18 +1,22 @@
-name: RideCheck CI/CD & Automated Production Pipeline
+name: 🤖 RideCheck 24/7 Autonomous AI Workforce & Deployment Pipeline
 
 on:
   schedule:
-    # รันตรวจสอบและอัปเดตอัตโนมัติทุกๆ 30 นาที
-    - cron: '*/30 * * * *'
-  workflow_dispatch: # ปุ่มกดสั่ง Deploy & Test ทันทีด้วยตนเอง
+    # รันตรวจสอบสภาพจราจร ราคา ทดสอบระบบ และอัปเดตเว็บอัตโนมัติทุกๆ 1 ชั่วโมง (24 รอบ/วัน ~288 นาที/เดือน จากโควตาฟรี 2,000 นาที)
+    - cron: '0 * * * *'
+  workflow_dispatch: # ปุ่มกดสั่งรันตรวจสอบและ Deploy ทันทีด้วยตนเองจาก GitHub Actions UI
   push:
     branches:
       - main
       - master
+    paths-ignore:
+      - 'logs/**'
+      - '*.md'
+      - 'docs/**'
 
 jobs:
   test-and-deploy:
-    name: 🧪 Automated Test & Production Deploy
+    name: 🧪 Automated Test, AI Workforce & Production Deploy
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -20,6 +24,8 @@ jobs:
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: 🟢 Setup Node.js 20
         uses: actions/setup-node@v4
@@ -44,19 +50,12 @@ jobs:
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_BARON_BOT_TOKEN: ${{ secrets.TELEGRAM_BARON_BOT_TOKEN }}
+          CEO_USER_ID: ${{ secrets.CEO_USER_ID }}
+          PARTNER_USER_ID: ${{ secrets.PARTNER_USER_ID }}
         run: |
           node worker-engine.js --once
-
-      - name: 🚀 Deploy to Firebase Hosting (Production)
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        if: env.FIREBASE_SERVICE_ACCOUNT != ''
-        with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
-          channelId: live
-          projectId: ridecheck-thailand
-        env:
-          FIREBASE_CLI_EXPERIMENTS: webframeworks
 
       - name: 💾 Commit & Push Sync to GitHub
         run: |
@@ -67,5 +66,27 @@ jobs:
             echo "ไม่มีการเปลี่ยนแปลงใน project-resources.json ไม่จำเป็นต้อง commit"
           else
             git commit -m "🤖 [Automated Workforce] Sync Surge & System Health [skip ci]"
-            git push
+            git pull --rebase origin main || true
+            git push origin main
           fi
+
+      - name: 🚀 Deploy to Firebase Hosting (Production)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          channelId: live
+          projectId: ridecheck-thailand
+        env:
+          FIREBASE_CLI_EXPERIMENTS: webframeworks
+
+      - name: 🌐 Deploy to GitHub Pages (Live Zero-Budget Web Hosting)
+        uses: peaceiris/actions-gh-pages@v4
+        if: ${{ success() }}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
+          publish_branch: gh-pages
+          exclude_assets: '.git,.github,node_modules,tests,scripts,logs'
+          keep_files: false
