@@ -351,6 +351,13 @@
         const dist = Math.max(0.1, Number(distanceKm) || 0.1);
         const dur = Math.max(1, Number(durationMin) || 1);
 
+        // Drift-reduction inputs (neutral defaults keep backward compatibility)
+        const zoneMult = getZoneMultiplier(zone);
+        const liveTraffic = (typeof trafficFactor === 'number' && trafficFactor > 0) ? trafficFactor : 1.0;
+        const tollsBaht = (typeof tolls === 'number' && tolls > 0) ? Math.round(tolls) : 0;
+        const feeOverride = (typeof platformFee === 'number' && platformFee >= 0) ? platformFee : null;
+        const vatEnabled = includeVat === true;
+
         const avgSpeed = dist / (dur / 60);
         const isHeavyTraffic = avgSpeed < 18;
         const isHighwaySpeed = avgSpeed > 45;
