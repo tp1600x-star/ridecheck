@@ -390,14 +390,22 @@
 
         const waitTime = calcDeterministicWaitTime(appId, vType, isHeavyTraffic, dist);
 
-        // 1. Handle Taxi Meter
+        // 1. Handle Taxi Meter (legal rate — zone/traffic do not multiply the meter; tolls are pass-through)
         if (vType === 'taxi' || cfg.isTaxiMeter) {
-            const bookingFee = cfg.bookingFee || 0;
+            const bookingFee = feeOverride !== null ? feeOverride : (cfg.bookingFee || 0);
             const taxiCalc = calcTaxiMeter(dist, dur, isHeavyTraffic, isHighwaySpeed, bookingFee, isAirport);
+            const taxiBase = taxiCalc.finalPrice;
+            const taxiVat = vatEnabled ? Math.round(taxiBase * 0.07) : 0;
+            const taxiFinal = taxiBase + tollsBaht + taxiVat;
 
             let subPriceNote = bookingFee
                 ? `มิเตอร์ ~฿${taxiCalc.rawPrice - bookingFee - airportFee} + ค่าเรียก ฿${bookingFee}${airportFee ? ' + ค่าสนามบิน ฿50' : ''}`
                 : `มิเตอร์ พ.ร.บ. คมนาคม 2566${airportFee ? ' + ค่าสนามบิน ฿50' : ''}`;
+            if (tollsBaht > 0) subPriceNote += ` + ทางด่วน ฿${tollsBaht}`;
+            if (vatEnabled && taxiVat > 0) subPriceNote += ` + VAT 7% ฿${taxiVat}`;
+
+            const taxiRangeLow = Math.round(taxiFinal * 0.93);
+            const taxiRangeHigh = Math.round(taxiFinal * 1.10);
 
             return {
                 app: appId,
@@ -407,13 +415,13 @@
                 initial: appMeta.initial,
                 serviceName: cfg.service || 'แท็กซี่มิเตอร์',
                 feature: cfg.feature || 'แท็กซี่มิเตอร์ตามกฎหมาย',
-                low: taxiCalc.minRange,
-                mid: taxiCalc.finalPrice,
-                high: taxiCalc.maxRange,
-                price: taxiCalc.finalPrice,
-                regularPrice: taxiCalc.finalPrice,
-                minRange: taxiCalc.minRange,
-                maxRange: taxiCalc.maxRange,
+                low: taxiRangeLow,
+                mid: taxiFinal,
+                high: taxiRangeHigh,
+                price: taxiFinal,
+                regularPrice: taxiFinal,
+                minRange: taxiRangeLow,
+                maxRange: taxiRangeHigh,
                 subPriceNote: subPriceNote,
                 promoDiscountTag: '',
                 promoNote: '',
@@ -424,14 +432,22 @@
                     durationFare: taxiCalc.durFareVal,
                     bookingFee: bookingFee,
                     airportFee: airportFee,
+                    tolls: tollsBaht,
+                    vat: taxiVat,
+                    zoneMultiplier: 1.0,
+                    trafficFactor: 1.0,
                     surgeMultiplier: 1.0,
-                    regularPrice: taxiCalc.finalPrice
+                    regularPrice: taxiFinal
                 },
                 baseFareVal: taxiCalc.baseFareVal,
                 distFareVal: taxiCalc.distFareVal,
                 durFareVal: taxiCalc.durFareVal,
                 bookingFeeVal: bookingFee,
                 airportFeeVal: airportFee,
+                tollsVal: tollsBaht,
+                vatVal: taxiVat,
+                zoneVal: 1.0,
+                trafficVal: 1.0,
                 surgeVal: 1.0,
                 discountVal: 0,
                 confidence: 'uncalibrated',
