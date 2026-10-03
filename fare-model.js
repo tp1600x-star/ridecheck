@@ -323,6 +323,11 @@
      * @param {boolean} [params.isAirport=false] - Whether trip originates/terminates at airport
      * @param {string} [params.provinceCode='BKK'] - Thai province identifier
      * @param {number} [params.surgeMultiplier] - Optional explicit surge multiplier
+     * @param {string} [params.zone='metro'] - Pickup demand zone: 'cbd' | 'metro' | 'suburb' | 'province'
+     * @param {number} [params.trafficFactor=1.0] - Live congestion multiplier on time cost (e.g. 1.4 in rush hour)
+     * @param {number} [params.tolls=0] - Expressway tolls (pass-through, never surged or zoned)
+     * @param {number} [params.platformFee=null] - Override flat platform/booking fee (฿) charged by the app
+     * @param {boolean} [params.includeVat=false] - Add 7% VAT on top of the payable fare
      * @returns {Object} Deterministic fare estimation result with low, mid, high & breakdown
      */
     function estimateFare({
@@ -334,7 +339,12 @@
         isRaining = false,
         isAirport = false,
         provinceCode = 'BKK',
-        surgeMultiplier = 1.0
+        surgeMultiplier = 1.0,
+        zone = 'metro',
+        trafficFactor = 1.0,
+        tolls = 0,
+        platformFee = null,
+        includeVat = false
     } = {}) {
         const appId = (app || 'grab').toLowerCase();
         const vType = (vehicleType || 'car').toLowerCase();
