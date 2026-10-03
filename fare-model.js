@@ -527,6 +527,12 @@
             subPriceNote = 'อัตราประเมินตามระยะทาง + สภาพจราจร';
         }
 
+        // Supplemental fare notes for the new drift-reduction add-ons
+        if (tollsTotal > 0) subPriceNote += ` + ทางด่วน ฿${tollsTotal} (บวกเพิ่มแยก ไม่ถูกคูณ Surge)`;
+        if (vatTotal > 0) subPriceNote += ` + VAT 7% ฿${vatTotal}`;
+        if (zoneMult !== 1.0) subPriceNote += ` + โซน${zone} ×${zoneMult.toFixed(2)}`;
+        if (liveTraffic !== 1.0) subPriceNote += ` + จราจรหนาแน่น ×${liveTraffic.toFixed(2)}`;
+
         // Calculate Range Bounds (low & high)
         let lowPrice, highPrice;
         if (appId === 'indrive') {
@@ -564,6 +570,10 @@
                 durationFare: Math.round(timeCost),
                 bookingFee: bookingFee,
                 airportFee: airportFee,
+                tolls: tollsTotal,
+                vat: vatTotal,
+                zoneMultiplier: zoneMult,
+                trafficFactor: liveTraffic,
                 surgeMultiplier: effectiveSurge,
                 regularPrice: regularPrice
             },
@@ -572,6 +582,10 @@
             durFareVal: Math.round(timeCost),
             bookingFeeVal: bookingFee,
             airportFeeVal: airportFee,
+            tollsVal: tollsTotal,
+            vatVal: vatTotal,
+            zoneVal: zoneMult,
+            trafficVal: liveTraffic,
             surgeVal: effectiveSurge,
             discountVal: 0,
             confidence: (SAMPLE_COUNT > 0) ? (cfg.isCalibrated ? 'high' : 'medium') : 'uncalibrated',
