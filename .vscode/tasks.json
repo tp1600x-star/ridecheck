@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Auto push saved changes to GitHub",
+      "type": "npm",
+      "script": "watch:sync",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "ridecheck-auto-sync",
+        "pattern": {
+          "regexp": "^(?!)$",
+          "message": 0
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^👀 ",
+          "endsPattern": "^(?!)$"
+        }
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    }
+  ]
+}

@@ -3,7 +3,7 @@
  * Automatically commits and pushes all changes/deploys to https://github.com/tp1600x-star/ridecheck
  */
 
-const { execSync, exec } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -29,6 +29,24 @@ function runCommand(command, options = {}) {
       encoding: 'utf8',
       stdio: ['pipe', 'pipe', 'pipe'],
       ...options
+    });
+    return { success: true, output: output.trim() };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      stdout: error.stdout ? error.stdout.toString() : '',
+      stderr: error.stderr ? error.stderr.toString() : ''
+    };
+  }
+}
+
+function runGitCommand(args) {
+  try {
+    const output = execFileSync('git', args, {
+      cwd: REPO_ROOT,
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe']
     });
     return { success: true, output: output.trim() };
   } catch (error) {
@@ -73,7 +91,7 @@ function syncToGitHub(customMessage = null) {
   // 3. Commit
   const commitMsg = customMessage || `chore(auto-sync): update RideCheck project - ${new Date().toISOString()}`;
   console.log(`📝 กำลังทำ git commit: "${commitMsg}"...`);
-  const commitRes = runCommand(`git commit -m "${commitMsg.replace(/"/g, '\\"')}"`);
+  const commitRes = runGitCommand(['commit', '-m', commitMsg]);
   if (!commitRes.success) {
     console.error(`❌ เกิดข้อผิดพลาดในการ commit:`, commitRes.stderr);
     return { success: false, message: commitRes.stderr };
@@ -84,7 +102,8 @@ function syncToGitHub(customMessage = null) {
   console.log(`🔄 ตรวจสอบการอัปเดตจากรีโมต (git pull --rebase origin ${BRANCH})...`);
   const pullRes = runCommand(`git pull --rebase origin ${BRANCH}`);
   if (!pullRes.success) {
-    console.warn(`⚠️ คำเตือน rebase (จะลอง push ต่อ):`, pullRes.stderr);
+    console.error(`❌ Rebase ไม่สำเร็จ ยกเลิกการ push เพื่อไม่ให้เกิดประวัติที่ขัดแย้ง:`, pullRes.stderr);
+    return { success: false, message: pullRes.stderr };
   }
 
   // 5. Push ไปยัง GitHub
@@ -113,9 +132,6 @@ if (isOnce) {
   console.log(`👀 [Git-Sync Watcher] เปิดโหมดเฝ้าดูการเปลี่ยนแปลงไฟล์ในโฟลเดอร์ RideCheck...`);
   console.log(`💡 ทุกครั้งที่ท่านแก้ไขหรือบันทึกไฟล์ ระบบจะรอ 5 วินาทีแล้ว Git Commit & Push ให้อัตโนมัติ`);
   console.log(`🛑 กด Ctrl + C เพื่อหยุดการทำงาน\n`);
-
-  // เรียกซิงก์รอบแรกทันทีที่เปิด
-  syncToGitHub('chore(auto-sync): initial watcher sync');
 
   let debounceTimer = null;
 
