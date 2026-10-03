@@ -173,6 +173,60 @@ async function runTestSuite() {
     // 4.7 Batch App Estimation (estimateRideFare)
     const allApps = FareModel.estimateRideFare(7.0, 18.0, 'car');
     assert(Array.isArray(allApps) && allApps.length === 5, 'estimateRideFare คืนค่าผลลัพธ์ครบทั้ง 5 ค่ายรถ');
+
+    // 4.8 Drift-Reduction Variables: Neutral Defaults (Backward Compatibility)
+    const baseRef = FareModel.estimateFare({ app: 'grab', vehicleType: 'car', distanceKm: 10.0, durationMin: 25.0, surgeMultiplier: 1.0 });
+    const neutralRef = FareModel.estimateFare({
+        app: 'grab', vehicleType: 'car', distanceKm: 10.0, durationMin: 25.0, surgeMultiplier: 1.0,
+        zone: 'metro', trafficFactor: 1.0, tolls: 0, platformFee: null, includeVat: false
+    });
+    assert(neutralRef.price === baseRef.price, `พารามิเตอร์ใหม่ (Zone/Traffic/Tolls/VAT/Fee) ค่าเริ่มต้นเป็นกลาง ราคาฐานไม่เปลี่ยน (฿${baseRef.price})`);
+    assert(baseRef.breakdown.tolls === 0 && baseRef.breakdown.vat === 0 && baseRef.breakdown.zoneMultiplier === 1 && baseRef.breakdown.trafficFactor === 1,
+        'breakdown รายงานตัวแปรใหม่ครบทุกช่อง (tolls/vat/zoneMultiplier/trafficFactor) เริ่มต้นเป็นค่ากลาง');
+
+    // 4.9 Zone Multiplier (CBD แพงกว่า / ชานเมืองถูกกว่า)
+    const cbdFare = FareModel.estimateFare({ app: 'grab', vehicleType: 'car', distanceKm: 10.0, durationMin: 25.0, zone: 'cbd' });
+    const suburbFare = FareModel.estimateFare({ app: 'grab', vehicleType: 'car', distanceKm: 10.0, durationMin: 25.0, zone: 'suburb' });
+    assert(cbdFare.price > baseRef.price, `โซน CBD (×1.10) ราคาสูงกว่าฐาน (฿${baseRef.price} -> ฿${cbdFare.price})`);
+    assert(suburbFare.price < baseRef.price, `โซนชานเมือง (×0.95) ราคาต่ำกว่าฐาน (฿${baseRef.price} -> ฿${suburbFare.price})`);
+    assert(FareModel.getZoneMultiplier('province') === 0.9 && FareModel.getZoneMultiplier('unknown') === 1.0, 'getZoneMultiplier คืนค่าตรงตามตารางโซนและค่ากลางเมื่อไม่รู้จัก');
+
+    // 4.10 Live Traffic Factor (time-cost inflation)
+    const jamFare = FareModel.estimateFare({ app: 'grab', vehicleType: 'car', distanceKm: 10.0, durationMin: 25.0, trafficFactor: 1.5 });
+    assert(jamFare.price > baseRef.price && jamFare.breakdown.trafficFactor === 1.5,
+        `trafficFactor 1.5x ขยายต้นทุนเวลาและดันราคาสูงขึ้น (฿${baseRef.price} -> ฿${jamFare.price})`);
+
+    // 4.11 Tolls Pass-Through (ไม่ถูกคูณ Surge)
+    const noToll2x = FareModel.estimateFare({ app: 'grab', vehicleType: 'car', distanceKm: 10.0, durationMin: 25.0, surgeMultiplier: 2.0 });
+    const toll75_2x = FareModel.estimateFare({ app: 'grab', vehicleType: 'car', distanceKm: 10.0, durationMin: 25.0, surgeMultiplier: 2.0, tolls: 75 });
+    assert(toll75_2x.price - noToll2x.price === 75, `ค่าทางด่วน ฿75 เป็น Pass-Through บวกตรงๆ ไม่ถูกคูณ Surge (ผลต่าง ฿${toll75_2x.price - noToll2x.price})`);
+
+    // 4.12 VAT 7% + Platform Fee Override
+    const vatFare = FareModel.estimateFare({ app: 'grab', vehicleType: 'car', distanceKm: 10.0, durationMin: 25.0, includeVat: true });
+    assert(vatFare.price - baseRef.price === Math.round(baseRef.price * 0.07),
+        `includeVat บวก VAT 7% ตรงตามสูตร (เพิ่ม ฿${vatFare.price - baseRef.price} จากฐาน ฿${baseRef.price})`);
+    const feeFare = FareModel.estimateFare({ app: 'grab', vehicleType: 'car', distanceKm: 10.0, durationMin: 25.0, platformFee: 25 });
+    assert(feeFare.breakdown.bookingFee === 25 && feeFare.price > baseRef.price,
+        `platformFee override ฿25 ถูกบวกเป็นค่าธรรมเนียมคงที่และแสดงใน breakdown (฿${feeFare.price})`);
+
+    // 4.13 Taxi Meter + Tolls (มิเตอร์กฎหมายไม่ถูกโซน/จราจร แต่ทางด่วนบวกเพิ่มได้)
+    const taxiNoToll = FareModel.estimateFare({ app: 'grab', vehicleType: 'taxi', distanceKm: 8.0, durationMin: 22.0 });
+    const taxiToll = FareModel.estimateFare({ app: 'grab', vehicleType: 'taxi', distanceKm: 8.0, durationMin: 22.0, tolls: 50 });
+    assert(taxiToll.price - taxiNoToll.price === 50, `แท็กซี่มิเตอร์ + ทางด่วน ฿50 บวกเพิ่มพอดี (ผลต่าง ฿${taxiToll.price - taxiNoToll.price})`);
+    assert(taxiNoToll.breakdown.zoneMultiplier === 1.0 && taxiNoToll.breakdown.trafficFactor === 1.0,
+        'มิเตอร์แท็กซี่ตาม พ.ร.บ. ไม่ถูก Zone/Traffic คูณทับ (กฎหมายคุมอัตรา)');
+
+    // 4.14 Determinism with New Variables (100 runs, identical JSON)
+    const fancyInput = {
+        app: 'grab', vehicleType: 'car', distanceKm: 12.5, durationMin: 30.0, surgeMultiplier: 1.3,
+        zone: 'cbd', trafficFactor: 1.4, tolls: 50, platformFee: 20, includeVat: true
+    };
+    const fancyFirst = JSON.stringify(FareModel.estimateFare(fancyInput));
+    let fancyDeterministic = true;
+    for (let i = 0; i < 100; i++) {
+        if (JSON.stringify(FareModel.estimateFare(fancyInput)) !== fancyFirst) { fancyDeterministic = false; break; }
+    }
+    assert(fancyDeterministic, 'ตัวแปรใหม่ทั้งหมดยังคง Deterministic 100% (ซ้ำ 100 รอบ ค่าตรงกันเป๊ะ)');
   }
 
   // Test 5: ตรวจสอบความปลอดภัย Security & Secret Check
