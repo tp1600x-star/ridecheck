@@ -274,7 +274,21 @@
         };
     }
 
-    // 5. Deterministic Wait-Time Calculation (Zero Math.random())
+    // 5. Drift-Reduction Variables (Step 4: Real-World Accuracy Layer)
+    // Zone multipliers reflect real demand density by pickup area (all opt-in, neutral default = 1.0)
+    const ZONE_MULTIPLIERS = {
+        cbd: 1.10,      // ย่านใจกลางเมือง (สุขุมวิท/สยาม/สาทร) — ดีมานด์คนขับสูง
+        metro: 1.00,    // เขตเมืองปรกติ (ค่าเริ่มต้น ไม่เปลี่ยนแปลงราคาฐาน)
+        suburb: 0.95,   // ชานเมือง / ปริมณฑล
+        province: 0.90  // ต่างจังหวัดเมืองรอง
+    };
+
+    function getZoneMultiplier(zone) {
+        const key = String(zone || 'metro').toLowerCase();
+        return ZONE_MULTIPLIERS[key] || 1.00;
+    }
+
+    // 6. Deterministic Wait-Time Calculation (Zero Math.random())
     function calcDeterministicWaitTime(appId, vehicleType, isHeavyTraffic, distanceKm) {
         const baseWaits = {
             grab:    { bike: 3, car: 4, taxi: 4, suv: 6, van: 7, premium: 6 },
