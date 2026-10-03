@@ -620,7 +620,12 @@
                 localTime: options.localTime || null,
                 isRaining: options.isRaining || false,
                 isAirport: options.isAirport || false,
-                provinceCode: options.provinceCode || 'BKK'
+                provinceCode: options.provinceCode || 'BKK',
+                zone: options.zone || 'metro',
+                trafficFactor: (typeof options.trafficFactor === 'number') ? options.trafficFactor : 1.0,
+                tolls: (typeof options.tolls === 'number') ? options.tolls : 0,
+                platformFee: (typeof options.platformFee === 'number') ? options.platformFee : null,
+                includeVat: options.includeVat === true
             });
         });
     }
@@ -632,6 +637,8 @@
         APP_METADATA,
         COVERAGE_METADATA,
         PRICING_MATRIX,
+        ZONE_MULTIPLIERS,
+        getZoneMultiplier,
         applyCalibration,
         resetCalibration,
         getCalibrationStatus,
