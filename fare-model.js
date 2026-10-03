@@ -485,11 +485,20 @@
         if (dist > 30) {
             speedFactor *= 0.70;
         }
-        const timeCost = dur * (cfg.perMin || 0) * speedFactor;
+        // Live traffic multiplier (opt-in, default 1.0): congestion inflates the time-cost component only
+        const timeCost = dur * (cfg.perMin || 0) * speedFactor * liveTraffic;
 
-        const bookingFee = cfg.bookingFee || 0;
-        const rawFare = cfg.base + distCost + timeCost + bookingFee + airportFee;
-        const regularPrice = Math.max(cfg.minFare || cfg.base, Math.round(rawFare * effectiveSurge));
+        const bookingFee = feeOverride !== null ? feeOverride : (cfg.bookingFee || 0);
+
+        // Zone multiplier applies to the ride portion (base + distance + time) only — flat fees stay flat
+        const ridePortion = (cfg.base + distCost + timeCost) * zoneMult;
+        const rawFare = ridePortion + bookingFee + airportFee;
+
+        // Fare before add-ons (surged) + pass-through add-ons (tolls never surged/zoned) + optional VAT 7%
+        const fareBeforeAddOns = Math.max(cfg.minFare || cfg.base, Math.round(rawFare * effectiveSurge));
+        const tollsTotal = tollsBaht;
+        const vatTotal = vatEnabled ? Math.round((fareBeforeAddOns + tollsTotal) * 0.07) : 0;
+        const regularPrice = fareBeforeAddOns + tollsTotal + vatTotal;
 
         // HONEST PRICING RULE: Display price is ALWAYS full regularPrice! Zero fictitious deductions.
         const midPrice = regularPrice;
