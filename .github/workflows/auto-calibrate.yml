@@ -32,9 +32,16 @@ jobs:
             npm install
           fi
 
-      - name: 🔬 Execute Parameter Calibration Engine
+      - name: 📥 Ingest Fresh Fare Samples (Firestore + Contributions Inbox)
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        continue-on-error: true
         run: |
-          node scripts/calibrate.js
+          node scripts/ingest-firestore-samples.js
+
+      - name: 🔬 Execute Gated Auto-Calibration (Release if Improved, Rollback if Worse)
+        run: |
+          node scripts/auto-calibrate.js
 
       - name: 🧪 Run QA & Pre-Deployment Verification (Zero-Tolerance)
         run: |
@@ -45,8 +52,15 @@ jobs:
           node -e '
             const fs = require("fs");
             const data = JSON.parse(fs.readFileSync("./data/calibrated-parameters.json", "utf8"));
+            let gate = { release: null, reason: "n/a", oldMape: null, newMape: null };
+            try { gate = JSON.parse(fs.readFileSync("./logs/calibration-gate.json", "utf8")); } catch (e) {}
+            const gateEmoji = gate.release ? "✅ RELEASED" : "⛔ ROLLBACK (kept previous parameters)";
             const summary = [
-              "## 📈 RideCheck Automated Model Calibration Summary",
+              "## 📈 RideCheck Auto-Learning Loop — Gated Calibration Summary",
+              "",
+              `### Gate Decision: ${gateEmoji}`,
+              `- **Reason**: ${gate.reason}`,
+              `- **MAPE Comparison**: ${gate.oldMape ?? "—"}% ➜ ${gate.newMape ?? "—"}%`,
               "",
               `- **Model Version**: \`${data.modelVersion}\``,
               `- **Calibrated At**: \`${data.calibratedAt}\``,
@@ -62,7 +76,9 @@ jobs:
             for (const [key, p] of Object.entries(data.parameters)) {
               summary.push(`| **${key.toUpperCase()}** | ฿${p.baseFare} | ฿${p.perKm} | ฿${p.perMin} | ฿${p.mae} | ${p.mape}% | ${p.coverage}% |`);
             }
-            summary.push("", "✅ **Verification**: Passed 100% QA Automated Tests. Parameters deployed to production.");
+            summary.push("", gate.release
+              ? "✅ **Verification**: Passed 100% QA Automated Tests. New parameters deployed to production."
+              : "🔒 **Verification**: Gate rolled back — production keeps the previous (better) parameters. QA still passed.");
             fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary.join("\n") + "\n");
           '
 

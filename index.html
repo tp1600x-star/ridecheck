@@ -5317,18 +5317,27 @@
 
         function submitFareContribution(event) {
             event.preventDefault();
+            const nowTs = new Date();
+            const actualPrice = parseFloat(document.getElementById('cf-price')?.value) || 0;
             const record = {
                 id: 'contrib_' + Date.now(),
-                timestamp: new Date().toISOString(),
+                timestamp: nowTs.toISOString(),
                 app: document.getElementById('cf-app')?.value || 'grab',
                 service_tier: document.getElementById('cf-tier')?.value || 'car',
                 origin_name: document.getElementById('cf-origin')?.value || '',
+                origin_lat: (typeof pickupLatLng === 'object' && pickupLatLng) ? pickupLatLng.lat : '',
+                origin_lng: (typeof pickupLatLng === 'object' && pickupLatLng) ? pickupLatLng.lng : '',
                 dest_name: document.getElementById('cf-dest')?.value || '',
+                dest_lat: (typeof dropoffLatLng === 'object' && dropoffLatLng) ? dropoffLatLng.lat : '',
+                dest_lng: (typeof dropoffLatLng === 'object' && dropoffLatLng) ? dropoffLatLng.lng : '',
                 road_distance_km: parseFloat(document.getElementById('cf-distance')?.value) || 0,
                 duration_min: parseFloat(document.getElementById('cf-duration')?.value) || 0,
-                actual_price: parseFloat(document.getElementById('cf-price')?.value) || 0,
+                actual_price: actualPrice,
+                actual_regular_price: actualPrice,
                 weather: document.getElementById('cf-weather')?.value || 'clear',
-                traffic_level: document.getElementById('cf-traffic')?.value || 'moderate'
+                traffic_level: document.getElementById('cf-traffic')?.value || 'moderate',
+                hour_of_day: nowTs.getHours(),
+                day_of_week: nowTs.getDay()
             };
 
             // Save to localStorage
@@ -5356,20 +5365,27 @@
                     alert('ยังไม่มีข้อมูลที่คุณเคยบันทึกไว้ในเครื่องนี้ (ส่งข้อมูลราคาก่อนกด Export)');
                     return;
                 }
-                const headers = ['timestamp', 'app', 'service_tier', 'origin_name', 'dest_name', 'road_distance_km', 'duration_min', 'actual_price', 'weather', 'traffic_level'];
+                const headers = ['timestamp', 'app', 'service_tier', 'origin_name', 'origin_lat', 'origin_lng', 'dest_name', 'dest_lat', 'dest_lng', 'road_distance_km', 'duration_min', 'actual_price', 'actual_regular_price', 'weather', 'traffic_level', 'hour_of_day', 'day_of_week'];
                 const rows = [headers.join(',')];
                 stored.forEach(r => {
                     rows.push([
                         r.timestamp,
                         r.app,
                         r.service_tier,
-                        `"${r.origin_name}"`,
-                        `"${r.dest_name}"`,
+                        `"${r.origin_name || ''}"`,
+                        r.origin_lat ?? '',
+                        r.origin_lng ?? '',
+                        `"${r.dest_name || ''}"`,
+                        r.dest_lat ?? '',
+                        r.dest_lng ?? '',
                         r.road_distance_km,
                         r.duration_min,
                         r.actual_price,
+                        r.actual_regular_price || r.actual_price,
                         r.weather,
-                        r.traffic_level
+                        r.traffic_level,
+                        r.hour_of_day ?? '',
+                        r.day_of_week ?? ''
                     ].join(','));
                 });
                 const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
