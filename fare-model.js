@@ -459,6 +459,7 @@
                     tolls: tollsBaht,
                     vat: taxiVat,
                     zoneMultiplier: 1.0,
+                    riderSupplyFactor: 1.0,
                     trafficFactor: 1.0,
                     surgeMultiplier: 1.0,
                     regularPrice: taxiFinal
