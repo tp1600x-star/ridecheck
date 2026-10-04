@@ -347,6 +347,7 @@
      * @param {number} [params.tolls=0] - Expressway tolls (pass-through, never surged or zoned)
      * @param {number} [params.platformFee=null] - Override flat platform/booking fee (฿) charged by the app
      * @param {boolean} [params.includeVat=false] - Add 7% VAT on top of the payable fare
+     * @param {number} [params.riderSupplyFactor=null] - Override rider supply density multiplier (auto-derived from zone if null)
      * @returns {Object} Deterministic fare estimation result with low, mid, high & breakdown
      */
     function estimateFare({
@@ -363,7 +364,8 @@
         trafficFactor = 1.0,
         tolls = 0,
         platformFee = null,
-        includeVat = false
+        includeVat = false,
+        riderSupplyFactor = null
     } = {}) {
         const appId = (app || 'grab').toLowerCase();
         const vType = (vehicleType || 'car').toLowerCase();
