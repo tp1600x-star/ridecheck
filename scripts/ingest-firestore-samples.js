@@ -46,7 +46,7 @@ function isValidContribution(row) {
 
 /**
  * แปลง record (จากหน้าเว็บหรือ Firestore) เป็นแถว CSV หนึ่งแถว
- * เติม字段 ที่ขาดจาก timestamp ให้ครบตาม schema ของ calibrate.js
+ * เติมฟิลด์ที่ขาดจาก timestamp ให้ครบตาม schema ของ calibrate.js
  */
 function convertContributionToCsvRow(record) {
     if (!isValidContribution(record)) return null;
