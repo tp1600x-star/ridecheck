@@ -216,12 +216,13 @@ async function runIngestion() {
     }
 
     const result = mergeContributionsIntoCsv(currentCsv, allRecords);
+    result.totalIncoming = allRecords.length;
 
     if (result.added > 0) {
         fs.writeFileSync(CSV_PATH, result.csv, 'utf8');
     }
 
-    console.log(`📊 [Ingest] รับเข้า ${result.totalIncoming = allRecords.length} รายการ | เพิ่มใหม่ ${result.added} | ซ้ำ ${result.duplicates} | ไม่ผ่านเกณฑ์ ${result.rejected}`);
+    console.log(`📊 [Ingest] รับเข้า ${result.totalIncoming} รายการ | เพิ่มใหม่ ${result.added} | ซ้ำ ${result.duplicates} | ไม่ผ่านเกณฑ์ ${result.rejected}`);
     console.log(`📈 [Ingest] data/calibration.csv ปัจจุบันมีแถวข้อมูลสะสม ${result.csv.trim().split(/\r?\n/).length - 1} ตัวอย่าง`);
     return result;
 }
