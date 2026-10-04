@@ -542,6 +542,27 @@ async function runTestSuite() {
     assert(false, 'ตรวจสอบ Group 9 ล้มเหลว', err.message);
   }
 
+  // Test 9b: User-Placed Landmark Persistence & Hidden Recommendations (v2)
+  console.log('\n🔍 Group 9b: User-Placed Landmarks (Save to Map) & No Preset Recommendations in v2');
+  try {
+    assert(v2Html.includes('ridecheck_user_landmarks'), 'v2.html มีระบบที่เก็บสถานที่ที่ผู้ใช้ปักเอง (ridecheck_user_landmarks)');
+    assert(v2Html.includes('function saveUserLandmark') && v2Html.includes('function getAllLandmarks'),
+        'v2.html มีฟังก์ชัน saveUserLandmark และ getAllLandmarks สำหรับอัปเดตแผนที่');
+    assert(v2Html.includes('getAllLandmarks().filter'), 'v2.html รวมสถานที่ที่ผู้ใช้ปักเองเข้าไปในการค้นหาด้วย');
+    assert(v2Html.includes('saveUserLandmark(name, pickupLatLng.lat, pickupLatLng.lng)'),
+        'v2.html บันทึกสถานที่อัตโนมัติเมื่อปักหมุดจุดรับบนแผนที่');
+    assert(v2Html.includes('saveUserLandmark(name, dropoffLatLng.lat, dropoffLatLng.lng)'),
+        'v2.html บันทึกสถานที่อัตโนมัติเมื่อปักหมุดจุดหมายบนแผนที่');
+    assert(v2Html.includes('saveUserLandmark(name, newPos.lat, newPos.lng)'),
+        'v2.html บันทึกสถานที่อัตโนมัติเมื่อลากหมุดปรับตำแหน่ง');
+    assert(!v2Html.includes('quickPicks'), 'v2.html ไม่โชว์สถานที่แนะนำสำเร็จรูป (quickPicks ถูกลบออกแล้ว)');
+    assert(v2Html.includes('ไม่โชว์ "สถานที่แนะนำ/ยอดนิยม" สำเร็จรูป'), 'v2.html มีนโยบายซ่อนรายการแนะนำและแสดงเฉพาะสถานที่ที่ผู้ใช้ปักเอง');
+  } catch (err) {
+    assert(false, 'ตรวจสอบ Group 9b ล้มเหลว', err.message);
+  }
+    assert(false, 'ตรวจสอบ Group 9 ล้มเหลว', err.message);
+  }
+
   console.log('\n================================================================');
   console.log(`📊 ผลการทดสอบ: ผ่าน ${passedCount} รายการ | ไม่ผ่าน ${failedCount} รายการ`);
   console.log('================================================================');
