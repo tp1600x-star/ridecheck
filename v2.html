@@ -3180,6 +3180,7 @@
                     if (pLabel) pLabel.innerHTML = `📍 จุดรับ: <b>${pickupAddressName}</b>`;
                     const pinStatus = document.getElementById('pin-status-text');
                     if (pinStatus) pinStatus.innerHTML = `📍 จุดรับ: ${pickupAddressName}`;
+                    saveUserLandmark(name, newPos.lat, newPos.lng);
                 } else {
                     dropoffLatLng = newPos;
                     dropoffAddressName = 'กำลังระบุชื่อสถานที่...';
@@ -3191,6 +3192,7 @@
                     if (dLabel) dLabel.innerHTML = `🎯 จุดหมาย: <b>${dropoffAddressName}</b>`;
                     const pinStatus = document.getElementById('pin-status-text');
                     if (pinStatus) pinStatus.innerHTML = `🎯 จุดหมาย: ${dropoffAddressName}`;
+                    saveUserLandmark(name, newPos.lat, newPos.lng);
                 }
 
                 if (pickupLatLng && dropoffLatLng) {
@@ -3410,6 +3412,7 @@
                     pickupAddressName = name;
                     if (pickLabel) pickLabel.innerHTML = `📍 จุดรับ: <b>${pickupAddressName}</b>`;
                     if (pinStatus) pinStatus.innerHTML = `📍 จุดรับ: <b>${pickupAddressName}</b> (แตะจุดถัดไปเพื่อเลือกปลายทาง)`;
+                    saveUserLandmark(name, pickupLatLng.lat, pickupLatLng.lng);
                 });
             } else if (!dropoffMarker) {
                 dropoffLatLng = e.latlng;
@@ -3424,6 +3427,7 @@
                 reverseGeocodeName(dropoffLatLng.lat, dropoffLatLng.lng).then(name => {
                     dropoffAddressName = name;
                     if (dropLabel) dropLabel.innerHTML = `🎯 จุดหมาย: <b>${dropoffAddressName}</b>`;
+                    saveUserLandmark(name, dropoffLatLng.lat, dropoffLatLng.lng);
                 });
 
                 await calculateAndShowResults();
@@ -4302,6 +4306,60 @@
             bkn_huai: { lat1: 13.7563, lon1: 100.4850, lat2: 13.7760, lon2: 100.5750, name1: 'บางกอกน้อย', name2: 'ห้วยขวาง' }
         };
 
+        // ===== USER-PLACED LANDMARK STORE (บันทึกสถานที่ที่ผู้ใช้ปักเองเข้าแผนที่) =====
+        // ทุกครั้งที่ปักหมุด/ลากหมุด/เลือกสถานที่ใหม่ ระบบจะบันทึกลง localStorage
+        // (Zero-PII: เก็บเฉพาะในเครื่องผู้ใช้ ไม่ส่งพิกัดขึ้นคลาวด์ ตามนโยบาย PDPA)
+        const USER_LANDMARKS_KEY = 'ridecheck_user_landmarks';
+        let USER_LANDMARKS = [];
+
+        function loadUserLandmarks() {
+            try {
+                const raw = JSON.parse(localStorage.getItem(USER_LANDMARKS_KEY) || '[]');
+                USER_LANDMARKS = Array.isArray(raw) ? raw : [];
+            } catch (e) { USER_LANDMARKS = []; }
+            return USER_LANDMARKS;
+        }
+
+        function getAllLandmarks() {
+            if (!USER_LANDMARKS || USER_LANDMARKS.length === 0) loadUserLandmarks();
+            return USER_LANDMARKS.concat(BANGKOK_LANDMARKS);
+        }
+
+        function saveUserLandmark(name, lat, lon) {
+            try {
+                if (!name || !lat || !lon) return false;
+                if (/กำลังระบุ|ตำแหน่งปัจจุบัน|GPS|Network Error|ไม่พบสถานที่/i.test(name)) return false;
+
+                loadUserLandmarks();
+                const fLat = Number(lat), fLon = Number(lon);
+
+                const dup = USER_LANDMARKS.some(l =>
+                    Math.abs(Number(l.lat) - fLat) < 0.0015 &&
+                    Math.abs(Number(l.lon) - fLon) < 0.0015
+                ) || USER_LANDMARKS.some(l => l.name === name);
+                if (dup) return false;
+
+                USER_LANDMARKS.unshift({
+                    name: String(name),
+                    lat: fLat,
+                    lon: fLon,
+                    category: '📌 สถานที่ที่คุณปักเอง',
+                    keywords: [String(name)],
+                    custom: true
+                });
+
+                if (USER_LANDMARKS.length > 50) USER_LANDMARKS.length = 50;
+                localStorage.setItem(USER_LANDMARKS_KEY, JSON.stringify(USER_LANDMARKS));
+
+                if (typeof showHQToast === 'function') {
+                    showHQToast(`📌 บันทึก "${name}" เข้าแผนที่แล้ว — พิมพ์ค้นหาได้ทันทีในครั้งถัดไป`, 'อัปเดตแผนที่');
+                }
+                return true;
+            } catch (e) { return false; }
+        }
+
+        loadUserLandmarks();
+
         // ===== 1. THAI NATIONWIDE 77 PROVINCES LANDMARK DATABASE (INSTANT 0ms / OFFLINE) =====
         const BANGKOK_LANDMARKS = [
             // Central / Bangkok
@@ -4519,6 +4577,8 @@
 
             map.setView([lat, lon], 15);
             clearSearchInput();
+            // 📌 บันทึกสถานที่ที่ผู้ใช้ปัก/เลือกเองเข้าคลังแผนที่ (localStorage, Zero-PII)
+            saveUserLandmark(name, lat, lon);
 
             if (chosenTarget === 'pickup') {
                 if (pickupMarker) map.removeLayer(pickupMarker);
@@ -4590,7 +4650,7 @@
             // Instant check against Bangkok Landmarks Database (0ms latency, offline)
             const lowerQuery = cleanQuery.toLowerCase();
             const rawLower = query.toLowerCase();
-            const matchedLandmarks = BANGKOK_LANDMARKS.filter(item => {
+            const matchedLandmarks = getAllLandmarks().filter(item => {
                 const nameLow = item.name.toLowerCase();
                 return nameLow.includes(lowerQuery) || nameLow.includes(rawLower) ||
                        item.keywords.some(k => k.toLowerCase().includes(lowerQuery) || k.toLowerCase().includes(rawLower));
@@ -4862,38 +4922,48 @@
         }
 
         function renderQuickLandmarkSuggestions() {
+            // นโยบายใหม่: ไม่โชว์ "สถานที่แนะนำ/ยอดนิยม" สำเร็จรูปอีกต่อไป
+            // แสดงเฉพาะสถานที่ที่ผู้ใช้ปักหมุดเอง (ถ้ามี) — ถ้าไม่มีจะโชว์เฉพาะคำแนะนำสั้น ๆ
+            loadUserLandmarks();
+
+            if (!USER_LANDMARKS || USER_LANDMARKS.length === 0) {
+                searchResults.innerHTML = `
+                    <div class="search-results-header">
+                        <span>🔍 ค้นหาสถานที่</span>
+                        <span style="color:var(--primary); font-size:10px;">พิมพ์ชื่อ + Enter</span>
+                    </div>
+                    <div class="search-item" style="cursor:default; opacity:0.85;">
+                        <i class="fas fa-map-pin" style="color:var(--primary); font-size:15px;"></i>
+                        <div class="search-item-info">
+                            <div class="search-item-name">แตะปักหมุดบนแผนที่เพื่อเพิ่มสถานที่ของคุณ</div>
+                            <div class="search-item-sub">สถานที่ที่ปักใหม่จะถูกบันทึกลงแผนที่อัตโนมัติ — ครั้งหน้าพิมพ์ค้นหาได้ทันที</div>
+                        </div>
+                    </div>
+                `;
+                searchResults.style.display = 'block';
+                return;
+            }
+
             searchResults.innerHTML = `
                 <div class="search-results-header">
-                    <span>⭐ สถานที่สำคัญและซอยยอดนิยม (แตะเลือกได้ทันที)</span>
-                    <span style="color:var(--primary); font-size:10px;">⚡ 0ms Instant</span>
+                    <span>📌 สถานที่ที่คุณปักไว้</span>
+                    <span style="color:var(--primary); font-size:10px;">${USER_LANDMARKS.length} จุด</span>
                 </div>
             `;
-            // Representative selection across urban sois and 5 regions of Thailand
-            const quickPicks = [
-                BANGKOK_LANDMARKS.find(l => l.name.includes('สยามพารากอน')),
-                BANGKOK_LANDMARKS.find(l => l.name.includes('สุขุมวิท 11')),
-                BANGKOK_LANDMARKS.find(l => l.name.includes('ซอยทองหล่อ 10')),
-                BANGKOK_LANDMARKS.find(l => l.name.includes('ซอยอารีย์ (พหลโยธิน 7)')),
-                BANGKOK_LANDMARKS.find(l => l.name.includes('ซอยโชคชัย 4')),
-                BANGKOK_LANDMARKS.find(l => l.name.includes('ซอยสาทร 11')),
-                BANGKOK_LANDMARKS.find(l => l.name.includes('สนามบินสุวรรณภูมิ')),
-                BANGKOK_LANDMARKS.find(l => l.name.includes('นิมมานเหมินท์')),
-                BANGKOK_LANDMARKS.find(l => l.name.includes('หาดป่าตอง')),
-                BANGKOK_LANDMARKS.find(l => l.name.includes('แหลมบาลีฮาย'))
-            ].filter(Boolean);
 
-            quickPicks.forEach(item => {
+            USER_LANDMARKS.forEach(item => {
+                const safeName = String(item.name).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                 const div = document.createElement('div');
                 div.className = 'search-item';
                 div.innerHTML = `
                     <i class="fas fa-location-dot" style="color:var(--primary); font-size:15px;"></i>
                     <div class="search-item-info">
                         <div class="search-item-name">${item.name}</div>
-                        <div class="search-item-sub">${item.category}</div>
+                        <div class="search-item-sub">${item.category || '📌 สถานที่ที่คุณปักเอง'}</div>
                     </div>
                     <div class="search-item-actions">
-                        <button type="button" class="search-action-btn" title="ปักเป็นจุดรับ" onclick="event.stopPropagation(); applyLocationPoint(${item.lat}, ${item.lon}, '${item.name}', 'pickup');">📍 รับ</button>
-                        <button type="button" class="search-action-btn btn-dropoff" title="ปักเป็นจุดหมาย" onclick="event.stopPropagation(); applyLocationPoint(${item.lat}, ${item.lon}, '${item.name}', 'dropoff');">🎯 ส่ง</button>
+                        <button type="button" class="search-action-btn" title="ปักเป็นจุดรับ" onclick="event.stopPropagation(); applyLocationPoint(${item.lat}, ${item.lon}, '${safeName}', 'pickup');">📍 รับ</button>
+                        <button type="button" class="search-action-btn btn-dropoff" title="ปักเป็นจุดหมาย" onclick="event.stopPropagation(); applyLocationPoint(${item.lat}, ${item.lon}, '${safeName}', 'dropoff');">🎯 ส่ง</button>
                     </div>
                 `;
                 div.onclick = () => {
@@ -4903,7 +4973,6 @@
             });
             searchResults.style.display = 'block';
         }
-
         function renderSearchResults(items) {
             searchResults.innerHTML = '';
             const rawUserQuery = searchInput.value.trim();
