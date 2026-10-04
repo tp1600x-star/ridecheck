@@ -374,6 +374,9 @@
 
         // Drift-reduction inputs (neutral defaults keep backward compatibility)
         const zoneMult = getZoneMultiplier(zone);
+        const supplyMult = (typeof riderSupplyFactor === 'number' && riderSupplyFactor > 0)
+            ? riderSupplyFactor
+            : getRiderSupplyFactor(zone);
         const liveTraffic = (typeof trafficFactor === 'number' && trafficFactor > 0) ? trafficFactor : 1.0;
         const tollsBaht = (typeof tolls === 'number' && tolls > 0) ? Math.round(tolls) : 0;
         const feeOverride = (typeof platformFee === 'number' && platformFee >= 0) ? platformFee : null;
