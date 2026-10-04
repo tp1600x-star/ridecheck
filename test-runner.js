@@ -227,6 +227,29 @@ async function runTestSuite() {
         if (JSON.stringify(FareModel.estimateFare(fancyInput)) !== fancyFirst) { fancyDeterministic = false; break; }
     }
     assert(fancyDeterministic, 'ตัวแปรใหม่ทั้งหมดยังคง Deterministic 100% (ซ้ำ 100 รอบ ค่าตรงกันเป๊ะ)');
+
+    // 4.15 Rider Supply Density Multiplier (R_supply) — ตัวแปรที่ขาดจากสูตรมาตรฐาน
+    assert(typeof FareModel.getRiderSupplyFactor === 'function', 'fare-model.js มีฟังก์ชัน getRiderSupplyFactor (ตัวคูณความหนาแน่นไรเดอร์)');
+    assert(FareModel.getRiderSupplyFactor('cbd') === 0.97 && FareModel.getRiderSupplyFactor('metro') === 1.0 &&
+        FareModel.getRiderSupplyFactor('suburb') === 1.0 && FareModel.getRiderSupplyFactor('province') === 1.12 &&
+        FareModel.getRiderSupplyFactor('unknown-zone') === 1.0,
+        'ตาราง Rider Supply ถูกต้อง (CBD ไรเดอร์หนาแน่น ×0.97 / เมือง ×1.0 / ต่างจังหวัดไรเดอร์บาง ×1.12)');
+
+    assert(baseRef.breakdown.riderSupplyFactor === 1.0, 'โซน metro ค่าเริ่มต้น Supply = 1.0 ไม่เปลี่ยนราคาฐาน (฿171 เท่าเดิม)');
+
+    const provinceFare = FareModel.estimateFare({ app: 'grab', vehicleType: 'car', distanceKm: 10.0, durationMin: 25.0, zone: 'province' });
+    assert(provinceFare.breakdown.riderSupplyFactor === 1.12 && provinceFare.price > baseRef.price,
+        `ต่างจังหวัดไรเดอร์บาง (Zone 0.90 × Supply 1.12) ราคาสูงกว่าฐานเล็กน้อย (฿${baseRef.price} -> ฿${provinceFare.price})`);
+    assert(cbdFare.breakdown.riderSupplyFactor === 0.97 && cbdFare.price > baseRef.price,
+        `CBD ไรเดอร์หนาแน่น (Zone 1.10 × Supply 0.97) ยังสูงกว่าฐานแต่ถูกกดลงจากดีมานด์ล้วน (฿${cbdFare.price})`);
+
+    // Override supply factor ด้วยค่าที่ระบุเอง
+    const supplyOverride = FareModel.estimateFare({ app: 'grab', vehicleType: 'car', distanceKm: 10.0, durationMin: 25.0, riderSupplyFactor: 1.20 });
+    assert(supplyOverride.breakdown.riderSupplyFactor === 1.20 && supplyOverride.price > baseRef.price,
+        `riderSupplyFactor override ×1.20 ถูกคูณเข้าสูตรและดันราคาขึ้น (฿${baseRef.price} -> ฿${supplyOverride.price})`);
+
+    // แท็กซี่มิเตอร์: Supply ไม่กระทบ (กฎหมายคุม)
+    assert(taxiNoToll.breakdown.riderSupplyFactor === 1.0, 'มิเตอร์แท็กซี่ไม่ถูกตัวคูณ Rider Supply ทับ (อัตราตาม พ.ร.บ.)');
   }
 
   // Test 5: ตรวจสอบความปลอดภัย Security & Secret Check
