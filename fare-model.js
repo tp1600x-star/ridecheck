@@ -654,7 +654,8 @@
                 trafficFactor: (typeof options.trafficFactor === 'number') ? options.trafficFactor : 1.0,
                 tolls: (typeof options.tolls === 'number') ? options.tolls : 0,
                 platformFee: (typeof options.platformFee === 'number') ? options.platformFee : null,
-                includeVat: options.includeVat === true
+                includeVat: options.includeVat === true,
+                riderSupplyFactor: (typeof options.riderSupplyFactor === 'number') ? options.riderSupplyFactor : null
             });
         });
     }
@@ -668,6 +669,8 @@
         PRICING_MATRIX,
         ZONE_MULTIPLIERS,
         getZoneMultiplier,
+        RIDER_SUPPLY_FACTORS,
+        getRiderSupplyFactor,
         applyCalibration,
         resetCalibration,
         getCalibrationStatus,
