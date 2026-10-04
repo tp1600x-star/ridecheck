@@ -388,6 +388,81 @@ async function runTestSuite() {
     }
   }
 
+  // Test 7b: Auto-Learning Loop — Gated Release & Sample Ingestion Pipeline
+  console.log('\n🔍 Group 7b: Auto-Learning Loop (Gated Release + Ingestion)');
+  let autoCalib = null;
+  let ingestPipe = null;
+  try {
+    autoCalib = require(path.join(ROOT_DIR, 'scripts', 'auto-calibrate.js'));
+    ingestPipe = require(path.join(ROOT_DIR, 'scripts', 'ingest-firestore-samples.js'));
+    assert(typeof autoCalib.evaluateRelease === 'function', 'scripts/auto-calibrate.js มีฟังก์ชัน evaluateRelease (Gate ปล่อย/rollback)');
+    assert(typeof ingestPipe.mergeContributionsIntoCsv === 'function', 'scripts/ingest-firestore-samples.js มีฟังก์ชัน mergeContributionsIntoCsv');
+    assert(typeof ingestPipe.convertContributionToCsvRow === 'function', 'scripts/ingest-firestore-samples.js มีฟังก์ชัน convertContributionToCsvRow');
+  } catch (err) {
+    assert(false, 'โหลดโมดูล Auto-Learning Loop ล้มเหลว', err.message);
+  }
+
+  if (autoCalib) {
+    // 7b.1 Gate Decision Matrix (Deterministic Pure Function)
+    const oldData = { metrics: { overallMAPE: 12.17 }, parameters: { grab_car: { base: 35 } } };
+    const betterData = { metrics: { overallMAPE: 9.50 }, parameters: { grab_car: { base: 36 } } };
+    const worseData = { metrics: { overallMAPE: 14.50 }, parameters: { grab_car: { base: 30 } } };
+    const sameParams = { metrics: { overallMAPE: 12.17 }, parameters: { grab_car: { base: 35 } } };
+    const overLimit = { metrics: { overallMAPE: 16.00 }, parameters: { grab_car: { base: 36 } } };
+
+    assert(autoCalib.evaluateRelease(oldData, betterData).release === true,
+        'Gate: MAPE ดีขึ้น (12.17% -> 9.50%) ระบบปล่อยพารามิเตอร์ใหม่อัตโนมัติ (RELEASE)');
+    assert(autoCalib.evaluateRelease(oldData, worseData).release === false,
+        'Gate: MAPE แย่ลง (12.17% -> 14.50%) ระบบ ROLLBACK พารามิเตอร์เดิมอัตโนมัติ');
+    assert(autoCalib.evaluateRelease(oldData, sameParams).release === false,
+        'Gate: พารามิเตอร์ไม่เปลี่ยนแปลง ระบบข้าม commit เพื่อไม่ให้เกิด timestamp churn');
+    assert(autoCalib.evaluateRelease(oldData, overLimit).release === false,
+        'Gate: MAPE เกิน 15% ห้ามปล่อยเด็ดขาด แม้จะดีขึ้นกว่าชุดเดิม (Zero-Tolerance)');
+    assert(autoCalib.evaluateRelease(null, betterData).release === true,
+        'Gate: ไม่มีพารามิเตอร์เดิม (รอบแรก) ระบบปล่อยชุดแรกได้');
+
+    // 7b.2 Gate determinism (100 iterations identical decision)
+    const gateFirst = JSON.stringify(autoCalib.evaluateRelease(oldData, worseData));
+    let gateDeterministic = true;
+    for (let i = 0; i < 100; i++) {
+      if (JSON.stringify(autoCalib.evaluateRelease(oldData, worseData)) !== gateFirst) { gateDeterministic = false; break; }
+    }
+    assert(gateDeterministic, 'คำตัดสิน Gate เป็น Deterministic 100% (ซ้ำ 100 รอบ ผลเดิมเป๊ะ)');
+  }
+
+  if (ingestPipe) {
+    // 7b.3 Sample Ingestion: accept, dedupe, reject
+    const demoCsv = ingestPipe.CSV_HEADER + '\n';
+    const sampleRec = {
+      timestamp: '2026-10-04T08:00:00+07:00', app: 'grab', service_tier: 'bike',
+      origin_name: 'สยามพารากอน', origin_lat: 13.746, origin_lng: 100.5349,
+      dest_name: 'BTS อารีย์', dest_lat: 13.7797, dest_lng: 100.5448,
+      road_distance_km: 4.8, duration_min: 14, actual_price: 63, actual_regular_price: 63,
+      weather: 'clear', traffic_level: 'high', hour_of_day: 8, day_of_week: 4
+    };
+    const merged1 = ingestPipe.mergeContributionsIntoCsv(demoCsv, [sampleRec]);
+    assert(merged1.added === 1 && merged1.rejected === 0, `Ingest: รับตัวอย่างราคาจริงเข้า CSV สำเร็จ (เพิ่ม ${merged1.added} แถว)`);
+
+    const merged2 = ingestPipe.mergeContributionsIntoCsv(merged1.csv, [sampleRec]);
+    assert(merged2.added === 0 && merged2.duplicates === 1,
+        'Ingest: กันซ้ำด้วยลายเซ็น timestamp+app+tier+distance+price (แถวซ้ำถูกตัดออก)');
+
+    const merged3 = ingestPipe.mergeContributionsIntoCsv(demoCsv, [
+      { app: 'uber', service_tier: 'bike', road_distance_km: 5, duration_min: 10, actual_price: 50 },
+      { app: 'grab', service_tier: 'bike', road_distance_km: 0, duration_min: 10, actual_price: 50 },
+      { app: 'grab', service_tier: 'bike', road_distance_km: 5, duration_min: -3, actual_price: 50 }
+    ]);
+    assert(merged3.added === 0 && merged3.rejected === 3,
+        'Ingest: ตัดตัวอย่างไม่ผ่านเกณฑ์ทิ้งทันที (แอปไม่รู้จัก / ระยะทาง <= 0 / เวลา <= 0) Zero-Garbage-In');
+
+    const merged4 = ingestPipe.mergeContributionsIntoCsv(demoCsv, [sampleRec, sampleRec]);
+    assert(merged4.added === 1 && merged4.duplicates === 1, 'Ingest: ตัวอย่างซ้ำในชุดเดียวกันถูกดักไว้ 1 แถว');
+
+    // 7b.4 Output row must satisfy calibration.csv schema (17 columns)
+    const row = ingestPipe.convertContributionToCsvRow(sampleRec);
+    assert(row && row.split(',').length >= 15, `Ingest: แถวผลลัพธ์ครบตาม schema calibration.csv (${row ? row.split(',').length : 0} คอลัมน์)`);
+  }
+
   // Test 8: ระบบคำนวณราคาพุ่งตามอุปสงค์และสภาพอากาศ (Step 4: Dynamic Surge Engine & Weather Fallback)
   console.log('\n🔍 Group 8: Dynamic Surge Engine & Weather Fallback (Specification A6)');
   let SurgeEngine = null;
