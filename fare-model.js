@@ -514,8 +514,9 @@
 
         const bookingFee = feeOverride !== null ? feeOverride : (cfg.bookingFee || 0);
 
-        // Zone multiplier applies to the ride portion (base + distance + time) only — flat fees stay flat
-        const ridePortion = (cfg.base + distCost + timeCost) * zoneMult;
+        // Zone × Rider-Supply multipliers apply to the ride portion (base + distance + time) only
+        // Formula: (Base + D×Rd + T×Rt) × Zone × R_supply × S + ค่าธรรมเนียม — flat fees stay flat
+        const ridePortion = (cfg.base + distCost + timeCost) * zoneMult * supplyMult;
         const rawFare = ridePortion + bookingFee + airportFee;
 
         // Fare before add-ons (surged) + pass-through add-ons (tolls never surged/zoned) + optional VAT 7%
