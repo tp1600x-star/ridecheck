@@ -560,8 +560,6 @@ async function runTestSuite() {
   } catch (err) {
     assert(false, 'ตรวจสอบ Group 9b ล้มเหลว', err.message);
   }
-    assert(false, 'ตรวจสอบ Group 9 ล้มเหลว', err.message);
-  }
 
   console.log('\n================================================================');
   console.log(`📊 ผลการทดสอบ: ผ่าน ${passedCount} รายการ | ไม่ผ่าน ${failedCount} รายการ`);
