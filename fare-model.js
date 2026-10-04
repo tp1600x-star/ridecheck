@@ -556,6 +556,7 @@
         if (tollsTotal > 0) subPriceNote += ` + ทางด่วน ฿${tollsTotal} (บวกเพิ่มแยก ไม่ถูกคูณ Surge)`;
         if (vatTotal > 0) subPriceNote += ` + VAT 7% ฿${vatTotal}`;
         if (zoneMult !== 1.0) subPriceNote += ` + โซน${zone} ×${zoneMult.toFixed(2)}`;
+        if (supplyMult !== 1.0) subPriceNote += ` + ไรเดอร์ ×${supplyMult.toFixed(2)}`;
         if (liveTraffic !== 1.0) subPriceNote += ` + จราจรหนาแน่น ×${liveTraffic.toFixed(2)}`;
 
         // Calculate Range Bounds (low & high)
