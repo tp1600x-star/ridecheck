@@ -288,6 +288,25 @@
         return ZONE_MULTIPLIERS[key] || 1.00;
     }
 
+    // Rider Supply Density Multiplier (R_supply) — ตัวแปรที่ขาดจากสูตรมาตรฐาน
+    // สูตรมาตรฐาน: Price = (Base + D×Rd + T×Rt) × S
+    // ความจริงแอปมีไรเดอร์กระจายทุกพื้นที่ ราคาจึงผูกกับ "ความหนาแน่นของไรเดอร์" ด้วย:
+    //   - CBD ไรเดอร์หนาแน่นมาก → แข่งขันสูง ราคาขยับลงเล็กน้อย (×0.97)
+    //   - เมืองทั่วไป → สมดุลปกติ (×1.00)
+    //   - ชานเมือง → กำลังพอดี ไม่ปรับ (×1.00)
+    //   - ต่างจังหวัด/เมืองรอง ไรเดอร์บาง → ราคาสูงขึ้นชดเชย (×1.12)
+    const RIDER_SUPPLY_FACTORS = {
+        cbd: 0.97,
+        metro: 1.00,
+        suburb: 1.00,
+        province: 1.12
+    };
+
+    function getRiderSupplyFactor(zone) {
+        const key = String(zone || 'metro').toLowerCase();
+        return RIDER_SUPPLY_FACTORS[key] || 1.00;
+    }
+
     // 6. Deterministic Wait-Time Calculation (Zero Math.random())
     function calcDeterministicWaitTime(appId, vehicleType, isHeavyTraffic, distanceKm) {
         const baseWaits = {
