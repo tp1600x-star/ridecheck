@@ -39,7 +39,7 @@ function evaluateRelease(oldData, newData) {
     if (newMape >= MAX_ALLOWED_MAPE) {
         return {
             release: false,
-            reason: `QA_GATE: MAPE ใหม่ ${newMape}% ไม่ผ่านเกณฑ์ (< ${MAX_ALLOWED_MAPE}%) — ROLLBACK 保住พารามิเตอร์เดิม`,
+            reason: `QA_GATE: MAPE ใหม่ ${newMape}% ไม่ผ่านเกณฑ์ (< ${MAX_ALLOWED_MAPE}%) — ROLLBACK เก็บพารามิเตอร์เดิมไว้ใช้ต่อ`,
             oldMape, newMape
         };
     }
