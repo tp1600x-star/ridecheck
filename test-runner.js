@@ -545,7 +545,8 @@ async function runTestSuite() {
   // Test 9b: User-Placed Landmark Persistence & Hidden Recommendations (v2)
   console.log('\n🔍 Group 9b: User-Placed Landmarks (Save to Map) & No Preset Recommendations in v2');
   try {
-    assert(v2Html.includes('ridecheck_user_landmarks'), 'v2.html มีระบบที่เก็บสถานที่ที่ผู้ใช้ปักเอง (ridecheck_user_landmarks)');
+    const v2Html2 = fs.readFileSync(path.join(ROOT_DIR, 'v2.html'), 'utf8');
+    assert(v2Html2.includes('ridecheck_user_landmarks'), 'v2.html มีระบบที่เก็บสถานที่ที่ผู้ใช้ปักเอง (ridecheck_user_landmarks)');
     assert(v2Html.includes('function saveUserLandmark') && v2Html.includes('function getAllLandmarks'),
         'v2.html มีฟังก์ชัน saveUserLandmark และ getAllLandmarks สำหรับอัปเดตแผนที่');
     assert(v2Html.includes('getAllLandmarks().filter'), 'v2.html รวมสถานที่ที่ผู้ใช้ปักเองเข้าไปในการค้นหาด้วย');
