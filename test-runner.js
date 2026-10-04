@@ -547,17 +547,17 @@ async function runTestSuite() {
   try {
     const v2Html2 = fs.readFileSync(path.join(ROOT_DIR, 'v2.html'), 'utf8');
     assert(v2Html2.includes('ridecheck_user_landmarks'), 'v2.html มีระบบที่เก็บสถานที่ที่ผู้ใช้ปักเอง (ridecheck_user_landmarks)');
-    assert(v2Html.includes('function saveUserLandmark') && v2Html.includes('function getAllLandmarks'),
+    assert(v2Html2.includes('function saveUserLandmark') && v2Html2.includes('function getAllLandmarks'),
         'v2.html มีฟังก์ชัน saveUserLandmark และ getAllLandmarks สำหรับอัปเดตแผนที่');
-    assert(v2Html.includes('getAllLandmarks().filter'), 'v2.html รวมสถานที่ที่ผู้ใช้ปักเองเข้าไปในการค้นหาด้วย');
-    assert(v2Html.includes('saveUserLandmark(name, pickupLatLng.lat, pickupLatLng.lng)'),
+    assert(v2Html2.includes('getAllLandmarks().filter'), 'v2.html รวมสถานที่ที่ผู้ใช้ปักเองเข้าไปในการค้นหาด้วย');
+    assert(v2Html2.includes('saveUserLandmark(name, pickupLatLng.lat, pickupLatLng.lng)'),
         'v2.html บันทึกสถานที่อัตโนมัติเมื่อปักหมุดจุดรับบนแผนที่');
-    assert(v2Html.includes('saveUserLandmark(name, dropoffLatLng.lat, dropoffLatLng.lng)'),
+    assert(v2Html2.includes('saveUserLandmark(name, dropoffLatLng.lat, dropoffLatLng.lng)'),
         'v2.html บันทึกสถานที่อัตโนมัติเมื่อปักหมุดจุดหมายบนแผนที่');
-    assert(v2Html.includes('saveUserLandmark(name, newPos.lat, newPos.lng)'),
+    assert(v2Html2.includes('saveUserLandmark(name, newPos.lat, newPos.lng)'),
         'v2.html บันทึกสถานที่อัตโนมัติเมื่อลากหมุดปรับตำแหน่ง');
-    assert(!v2Html.includes('quickPicks'), 'v2.html ไม่โชว์สถานที่แนะนำสำเร็จรูป (quickPicks ถูกลบออกแล้ว)');
-    assert(v2Html.includes('ไม่โชว์ "สถานที่แนะนำ/ยอดนิยม" สำเร็จรูป'), 'v2.html มีนโยบายซ่อนรายการแนะนำและแสดงเฉพาะสถานที่ที่ผู้ใช้ปักเอง');
+    assert(!v2Html2.includes('quickPicks'), 'v2.html ไม่โชว์สถานที่แนะนำสำเร็จรูป (quickPicks ถูกลบออกแล้ว)');
+    assert(v2Html2.includes('ไม่โชว์ "สถานที่แนะนำ/ยอดนิยม" สำเร็จรูป'), 'v2.html มีนโยบายซ่อนรายการแนะนำและแสดงเฉพาะสถานที่ที่ผู้ใช้ปักเอง');
   } catch (err) {
     assert(false, 'ตรวจสอบ Group 9b ล้มเหลว', err.message);
   }
