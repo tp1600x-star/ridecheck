@@ -599,6 +599,7 @@
                 tolls: tollsTotal,
                 vat: vatTotal,
                 zoneMultiplier: zoneMult,
+                riderSupplyFactor: supplyMult,
                 trafficFactor: liveTraffic,
                 surgeMultiplier: effectiveSurge,
                 regularPrice: regularPrice
@@ -611,6 +612,7 @@
             tollsVal: tollsTotal,
             vatVal: vatTotal,
             zoneVal: zoneMult,
+            supplyVal: supplyMult,
             trafficVal: liveTraffic,
             surgeVal: effectiveSurge,
             discountVal: 0,
